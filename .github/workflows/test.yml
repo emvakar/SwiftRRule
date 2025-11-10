@@ -91,11 +91,18 @@ jobs:
       
       - name: Build for iOS ${{ matrix.ios-version }}
         run: |
-          swift build
+          xcodebuild -scheme SwiftRRule \
+            -destination "platform=iOS Simulator,name=${{ matrix.device }}" \
+            -configuration Debug \
+            clean build
       
       - name: Test for iOS ${{ matrix.ios-version }}
         run: |
-          swift test
+          xcodebuild test \
+            -scheme SwiftRRule \
+            -destination "platform=iOS Simulator,name=${{ matrix.device }}" \
+            -configuration Debug \
+            -enableCodeCoverage NO
 
   test-summary:
     name: Test Summary
