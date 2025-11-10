@@ -7,12 +7,13 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  test-linux:
-    name: Test on Linux - Swift ${{ matrix.swift }}
-    runs-on: ubuntu-22.04
+  test:
+    name: Test on ${{ matrix.os }} - Swift ${{ matrix.swift }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-22.04, macos-latest]
         swift: ["6.0"]
     
     steps:
@@ -41,40 +42,7 @@ jobs:
       - name: Test Results
         if: always()
         run: |
-          echo "Tests completed on Linux with Swift ${{ matrix.swift }}"
-  
-  test-macos:
-    name: Test on macOS
-    runs-on: macos-latest
-    
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      
-      - name: Setup Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
-      
-      - name: Build for macOS
-        run: |
-          xcodebuild -scheme SwiftRRule \
-            -destination "platform=macOS" \
-            -configuration Debug \
-            clean build
-      
-      - name: Test for macOS
-        run: |
-          xcodebuild test \
-            -scheme SwiftRRule \
-            -destination "platform=macOS" \
-            -configuration Debug \
-            -enableCodeCoverage NO
-      
-      - name: Test Results
-        if: always()
-        run: |
-          echo "Tests completed on macOS"
+          echo "Tests completed on ${{ matrix.os }} with Swift ${{ matrix.swift }}"
 
   # test-ios: временно отключено
   # name: Test on iOS ${{ matrix.ios-version }}
@@ -158,7 +126,7 @@ jobs:
   test-summary:
     name: Test Summary
     runs-on: ubuntu-22.04
-    needs: [test-linux, test-macos]
+    needs: [test]
     if: always()
     
     steps:
@@ -173,10 +141,8 @@ jobs:
           echo "- Linux (Ubuntu 22.04)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Swift Versions:" >> $GITHUB_STEP_SUMMARY
-          echo "- Swift 6.0 (для Linux через swift-actions/setup-swift@v2)" >> $GITHUB_STEP_SUMMARY
-          echo "- Swift из Xcode latest-stable (для macOS)" >> $GITHUB_STEP_SUMMARY
+          echo "- Swift 6.0 (через swift-actions/setup-swift@v2)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Setup Swift Action:" >> $GITHUB_STEP_SUMMARY
-          echo "- swift-actions/setup-swift@v2 (для Linux)" >> $GITHUB_STEP_SUMMARY
-          echo "- Swift из Xcode (для macOS)" >> $GITHUB_STEP_SUMMARY
+          echo "- swift-actions/setup-swift@v2" >> $GITHUB_STEP_SUMMARY
 
