@@ -111,10 +111,36 @@ jobs:
         run: |
           xcrun simctl list devices available
       
+      - name: Find and boot iOS simulator
+        run: |
+          # Найти доступный симулятор для нужной версии iOS
+          # Формат вывода: "iPhone 16 (6A759332-8BEA-4509-9299-2453CD3E2DEA) (Shutdown)"
+          SIMULATOR=$(xcrun simctl list devices available | grep -i "iPhone" | grep -i "iOS ${{ matrix.ios-version }}" | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+          
+          if [ -z "$SIMULATOR" ]; then
+            # Если не найден для конкретной версии, попробуем найти любой iPhone симулятор
+            SIMULATOR=$(xcrun simctl list devices available | grep -i "iPhone" | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+          fi
+          
+          if [ -z "$SIMULATOR" ]; then
+            echo "Error: No iOS simulator found"
+            xcrun simctl list devices available
+            exit 1
+          fi
+          
+          echo "SIMULATOR_UUID=$SIMULATOR" >> $GITHUB_ENV
+          echo "Using simulator: $SIMULATOR"
+          
+          # Загрузить симулятор (если еще не загружен)
+          xcrun simctl boot "$SIMULATOR" 2>/dev/null || true
+          
+          # Подождать, пока симулятор загрузится
+          sleep 5
+      
       - name: Build for iOS ${{ matrix.ios-version }}
         run: |
           xcodebuild -scheme SwiftRRule \
-            -destination "platform=iOS Simulator,name=${{ matrix.device }}" \
+            -destination "id=${{ env.SIMULATOR_UUID }}" \
             -configuration Debug \
             clean build
       
@@ -122,7 +148,7 @@ jobs:
         run: |
           xcodebuild test \
             -scheme SwiftRRule \
-            -destination "platform=iOS Simulator,name=${{ matrix.device }}" \
+            -destination "id=${{ env.SIMULATOR_UUID }}" \
             -configuration Debug \
             -enableCodeCoverage NO
 
