@@ -7,24 +7,50 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  # Тестирование на Ubuntu и macOS с помощью swift test
-  test-linux-macos:
-    name: Swift ${{ matrix.swift }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+  # Тестирование на Ubuntu с помощью swift test
+  test-linux:
+    name: Swift ${{ matrix.swift }} on Ubuntu
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, macos-26]
         swift: ["6.0"]
     
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       
+      - name: Import Swift GPG keys
+        run: |
+          curl --silent --retry 3 --location --fail https://swift.org/keys/all-keys.asc | gpg --import - || true
+      
       - name: Setup Swift
         uses: swift-actions/setup-swift@v2
         with:
           swift-version: ${{ matrix.swift }}
+      
+      - name: Build
+        run: swift build
+      
+      - name: Run tests
+        run: swift test
+
+  # Тестирование на macOS с помощью swift test (используем встроенный Swift из Xcode)
+  test-macos:
+    name: Swift on macOS
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      
+      - name: Verify Swift version
+        run: swift --version
       
       - name: Build
         run: swift build
@@ -114,7 +140,7 @@ jobs:
   test-summary:
     name: Test Summary
     runs-on: ubuntu-22.04
-    needs: [test-linux-macos]
+    needs: [test-linux, test-macos]
     if: always()
     
     steps:
@@ -123,7 +149,7 @@ jobs:
           echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          if [ "${{ needs.test-linux-macos.result }}" == "success" ]; then
+          if [ "${{ needs.test-linux.result }}" == "success" ] && [ "${{ needs.test-macos.result }}" == "success" ]; then
             echo "✅ All tests completed successfully" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Some tests failed" >> $GITHUB_STEP_SUMMARY
@@ -131,13 +157,15 @@ jobs:
           
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Tested Platforms:" >> $GITHUB_STEP_SUMMARY
-          echo "- macOS 26" >> $GITHUB_STEP_SUMMARY
+          echo "- macOS 14" >> $GITHUB_STEP_SUMMARY
           echo "- Linux (Ubuntu 22.04)" >> $GITHUB_STEP_SUMMARY
           echo "- iOS: временно отключено" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Swift Versions:" >> $GITHUB_STEP_SUMMARY
-          echo "- Swift 6.0" >> $GITHUB_STEP_SUMMARY
+          echo "- Swift 6.0 (Ubuntu)" >> $GITHUB_STEP_SUMMARY
+          echo "- Swift из Xcode (macOS)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Test Results:" >> $GITHUB_STEP_SUMMARY
-          echo "- Linux/macOS: ${{ needs.test-linux-macos.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Linux: ${{ needs.test-linux.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- macOS: ${{ needs.test-macos.result }}" >> $GITHUB_STEP_SUMMARY
 
