@@ -2,7 +2,7 @@
 
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)
 ![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20macOS%20%7C%20tvOS%20%7C%20watchOS%20%7C%20Linux-lightgrey.svg)
-![Tests](https://img.shields.io/badge/tests-430%20passed-brightgreen.svg)
+![Tests](https://github.com/emvakar/SwiftRRule/actions/workflows/test.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Status](https://img.shields.io/badge/status-active%20development-yellow.svg)
 
