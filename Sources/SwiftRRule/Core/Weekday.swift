@@ -9,7 +9,7 @@
 import Foundation
 
 /// День недели с поддержкой позиции (например, 2MO = второй понедельник)
-public struct Weekday: Codable, Equatable, Hashable {
+public struct Weekday: Codable, Equatable, Hashable, Sendable {
     /// День недели (1 = воскресенье, 2 = понедельник, ..., 7 = суббота)
     public let dayOfWeek: Int
     
