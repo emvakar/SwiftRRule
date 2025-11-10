@@ -6,25 +6,27 @@
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Status](https://img.shields.io/badge/status-active%20development-yellow.svg)
 
-Swift-библиотека для работы с правилами повторения событий (RRule) согласно стандарту RFC 5545 (iCalendar).
+[English](README.md) | [Русский](README.ru.md)
 
-## Описание
+Swift library for working with recurrence rules (RRule) according to RFC 5545 (iCalendar) standard.
 
-SwiftRRule позволяет парсить, генерировать и вычислять даты на основе правил повторения событий. Библиотека полностью совместима со стандартом RFC 5545 и может использоваться как в iOS/macOS приложениях, так и в серверных приложениях на Vapor 4.
+## Description
 
-## Возможности
+SwiftRRule allows you to parse, generate, and calculate dates based on recurrence rules. The library is fully compatible with RFC 5545 standard and can be used in both iOS/macOS applications and server-side applications on Vapor 4.
 
-- ✅ Парсинг строк RRule
-- ✅ Генерация строк RRule
-- ✅ Вычисление дат на основе правил повторения
-- ✅ Поддержка всех частот (DAILY, WEEKLY, MONTHLY, YEARLY)
-- ✅ Поддержка всех BY* правил
-- ✅ Кросс-платформенность (iOS, macOS, tvOS, watchOS, Linux)
-- ✅ Подключение через Swift Package Manager
+## Features
 
-## Требования
+- ✅ RRule string parsing
+- ✅ RRule string generation
+- ✅ Date calculation based on recurrence rules
+- ✅ Support for all frequencies (DAILY, WEEKLY, MONTHLY, YEARLY)
+- ✅ Support for all BY* rules
+- ✅ Cross-platform (iOS, macOS, tvOS, watchOS, Linux)
+- ✅ Swift Package Manager integration
 
-### Платформы
+## Requirements
+
+### Platforms
 
 - **iOS** 13.0+
 - **macOS** 10.15+
@@ -32,107 +34,111 @@ SwiftRRule позволяет парсить, генерировать и выч
 - **watchOS** 6.0+
 - **Linux** (Ubuntu 18.04+)
 
-### Язык и инструменты
+### Language and Tools
 
 - **Swift** 5.9+
-- **Xcode** 15.0+ (для разработки на Apple платформах)
-- **Swift Package Manager** (встроен в Swift 5.9+)
+- **Xcode** 15.0+ (for development on Apple platforms)
+- **Swift Package Manager** (built into Swift 5.9+)
 
-## Установка
+## Installation
 
 ### Swift Package Manager
 
-Добавьте зависимость в ваш `Package.swift`:
+Add the dependency to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://gitlab.eskaria.com/Open Source/Frameworks/SwiftRRule.git", from: "1.0.0")
+    .package(url: "https://github.com/your-username/SwiftRRule.git", from: "1.0.0")
 ]
 ```
 
-Или в Xcode:
+Or in Xcode:
 1. File → Add Packages...
-2. Введите URL репозитория
-3. Выберите версию
+2. Enter the repository URL
+3. Select the version
 
-## Использование
+## Usage
 
-### Базовое использование
+### Basic Usage
 
 ```swift
 import SwiftRRule
 
-// Создание RRule
+// Create RRule
 let rrule = RRule(
     frequency: .daily,
     interval: 2,
     count: 10
 )
 
-// Парсинг RRule
+// Parse RRule
 let parsedRRule = try RRule.parse("FREQ=DAILY;INTERVAL=2;COUNT=10")
 
-// Парсинг сложных правил
+// Parse complex rules
 let weeklyRule = try RRule.parse("FREQ=WEEKLY;BYDAY=MO,WE,FR;COUNT=10")
 let monthlyRule = try RRule.parse("FREQ=MONTHLY;BYMONTHDAY=1,15")
 
-// Генерация дат
+// Generate dates
 let dates = rrule.generateDates(startingFrom: Date())
-// Результат: массив дат, соответствующих правилу повторения
+// Result: array of dates matching the recurrence rule
 
-// Генерация строки RRule
+// Generate RRule string
 let rruleString = rrule.toString()
-// Результат: "FREQ=DAILY;INTERVAL=2;COUNT=10"
+// Result: "FREQ=DAILY;INTERVAL=2;COUNT=10"
 ```
 
-## Тестирование
+## Testing
 
-Библиотека имеет полное покрытие тестами:
+The library has comprehensive test coverage:
 
-- **Всего тестов**: 430
-- **Статус**: ✅ Все тесты проходят успешно
-- **Покрытие**: 
-  - Парсинг RRule (99 тестов)
-  - Генерация строк RRule (91 тест)
-  - Генерация дат (164 теста)
-  - Основная структура RRule (48 тестов)
-  - Enum Frequency (28 тестов)
-  - Структура Weekday (57 тестов)
+- **Total tests**: 430
+- **Status**: ✅ All tests pass successfully
+- **Coverage**: 
+  - RRule parsing (99 tests)
+  - RRule string generation (91 tests)
+  - Date generation (164 tests)
+  - Core RRule structure (48 tests)
+  - Frequency enum (28 tests)
+  - Weekday structure (57 tests)
 
-Все тесты проверяют:
-- ✅ Базовую функциональность
-- ✅ Граничные случаи
-- ✅ Обработку ошибок
-- ✅ Валидацию входных данных
-- ✅ Реальные сценарии использования
-- ✅ Кросс-платформенную совместимость
+All tests verify:
+- ✅ Basic functionality
+- ✅ Edge cases
+- ✅ Error handling
+- ✅ Input validation
+- ✅ Real-world usage scenarios
+- ✅ Cross-platform compatibility
 
-## Статус разработки
+## Development Status
 
-🚧 **Библиотека находится в активной разработке**
+🚧 **Library is in active development**
 
-Текущий статус:
-- ✅ Базовая структура проекта
-- ✅ Основные типы данных (Frequency, Weekday, RRule)
-- ✅ Парсинг RRule
-- ✅ Генерация дат
-- ✅ Генерация строк RRule
-- ✅ Полное покрытие тестами (430 тестов)
+Current status:
+- ✅ Basic project structure
+- ✅ Core data types (Frequency, Weekday, RRule)
+- ✅ RRule parsing
+- ✅ Date generation
+- ✅ RRule string generation
+- ✅ Comprehensive test coverage (430 tests)
 
-## План разработки
+## Development Plan
 
-Подробный план разработки доступен в файле [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
+Detailed development plan is available in [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
 
-## Лицензия
+## Documentation
 
-MIT License
+- [English Documentation](docs/README.en.md)
+- [Русская Документация](docs/README.ru.md)
 
-## Авторы
+## License
 
-Создано для использования в проектах Eskaria.
+MIT License - see [LICENSE](LICENSE) file for details.
 
-## Ссылки
+## Authors
+
+Created for use in Eskaria projects.
+
+## Links
 
 - [RFC 5545 - iCalendar](https://tools.ietf.org/html/rfc5545)
 - [RFC 5546 - iCalendar Transport-Independent Interoperability Protocol](https://tools.ietf.org/html/rfc5546)
-
