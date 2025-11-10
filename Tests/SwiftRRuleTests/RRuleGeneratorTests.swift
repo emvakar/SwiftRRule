@@ -388,6 +388,10 @@ final class RRuleGeneratorTests: XCTestCase {
         if let until1 = rrule.until, let until2 = reparsed.until {
             let diff = abs(until1.timeIntervalSince(until2))
             XCTAssertLessThan(diff, 86400, "UNTIL dates should be within 1 day")
+        } else {
+            // Если UNTIL не распарсился или не сгенерировался, это может быть ожидаемым
+            // Но в этом тесте мы ожидаем, что UNTIL должен быть
+            XCTFail("UNTIL should be present in both original and reparsed RRule")
         }
     }
     

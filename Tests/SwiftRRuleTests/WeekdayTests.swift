@@ -105,9 +105,15 @@ final class WeekdayTests: XCTestCase {
         // Проверяем, что результат корректен
         if let w1 = weekday1 {
             XCTAssertEqual(w1.dayOfWeek, 2)
+        } else {
+            // Если парсер не обработал пробелы, это ожидаемое поведение
+            // Тест проверяет, что парсер не падает с ошибкой
         }
         if let w2 = weekday2 {
             XCTAssertEqual(w2.dayOfWeek, 2)
+        } else {
+            // Если парсер не обработал пробелы, это ожидаемое поведение
+            // Тест проверяет, что парсер не падает с ошибкой
         }
     }
     
@@ -119,14 +125,20 @@ final class WeekdayTests: XCTestCase {
         let weekday3 = Weekday(from: "MONDAY")
         // Парсер может принять частично валидные строки или вернуть nil
         // Проверяем, что результат корректен
-        XCTAssertNil(weekday1)
+        XCTAssertNil(weekday1, "XX should not be parsed as valid weekday")
         // MON может быть интерпретировано как MO (парсер принимает префикс)
         if let w2 = weekday2 {
             XCTAssertEqual(w2.dayOfWeek, 2, "MON should be interpreted as MO")
+        } else {
+            // Если MON не распарсился, это тоже валидное поведение
+            // Тест проверяет, что парсер не падает с ошибкой
         }
         // MONDAY может быть интерпретировано как MO (парсер принимает префикс)
         if let w3 = weekday3 {
             XCTAssertEqual(w3.dayOfWeek, 2, "MONDAY should be interpreted as MO")
+        } else {
+            // Если MONDAY не распарсился, это тоже валидное поведение
+            // Тест проверяет, что парсер не падает с ошибкой
         }
     }
     
@@ -140,14 +152,23 @@ final class WeekdayTests: XCTestCase {
         // Проверяем, что результат корректен
         if let w1 = weekday1 {
             XCTAssertEqual(w1.dayOfWeek, 2)
+        } else {
+            // Если 0MO не распарсился (позиция 0 недопустима), это ожидаемое поведение
+            // Тест проверяет, что парсер не падает с ошибкой
         }
         if let w2 = weekday2 {
             XCTAssertEqual(w2.dayOfWeek, 2)
             XCTAssertEqual(w2.position, 8)
+        } else {
+            // Если 8MO не распарсился (позиция 8 вне диапазона), это ожидаемое поведение
+            // Тест проверяет, что парсер не падает с ошибкой
         }
         if let w3 = weekday3 {
             XCTAssertEqual(w3.dayOfWeek, 2)
             XCTAssertEqual(w3.position, -54)
+        } else {
+            // Если -54MO не распарсился (позиция -54 вне диапазона), это ожидаемое поведение
+            // Тест проверяет, что парсер не падает с ошибкой
         }
     }
     
@@ -490,10 +511,12 @@ final class WeekdayTests: XCTestCase {
         for weekday in weekdays {
             let string = weekday.toString()
             let fromString = Weekday(from: string)
-            XCTAssertNotNil(fromString)
+            XCTAssertNotNil(fromString, "Weekday should be parseable from its toString() result")
             if let fromString = fromString {
                 XCTAssertEqual(weekday.dayOfWeek, fromString.dayOfWeek)
                 XCTAssertEqual(weekday.position, fromString.position)
+            } else {
+                XCTFail("Weekday should be parseable from string: \(string)")
             }
         }
     }
