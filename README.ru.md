@@ -126,6 +126,14 @@ let rruleString = rrule.toString()
 - [English Documentation](docs/README.en.md)
 - [Русская Документация](docs/README.ru.md)
 
+## Вклад в проект
+
+Мы приветствуем вклад в проект! Пожалуйста, ознакомьтесь с нашим [Руководством по внесению вклада](CONTRIBUTING.ru.md) ([English version](CONTRIBUTING.md)) для получения подробной информации о том, как внести вклад в этот проект.
+
+- [Кодекс поведения](CODE_OF_CONDUCT.ru.md) ([English version](CODE_OF_CONDUCT.md))
+- [Политика безопасности](.github/SECURITY.ru.md) ([English version](.github/SECURITY.md))
+- [История изменений](CHANGELOG.ru.md) ([English version](CHANGELOG.md))
+
 ## Лицензия
 
 MIT License - см. файл [LICENSE](LICENSE) для деталей.

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and Discussions
+    url: https://github.com/emvakar/SwiftRRule/discussions
+    about: Ask a question or start a discussion
+  - name: Documentation
+    url: https://github.com/emvakar/SwiftRRule/tree/main/docs
+    about: Read the project documentation

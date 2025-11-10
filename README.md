@@ -126,6 +126,14 @@ Current status:
 - [English Documentation](docs/README.en.md)
 - [Русская Документация](docs/README.ru.md)
 
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to contribute to this project.
+
+- [Code of Conduct](CODE_OF_CONDUCT.md) ([Русская версия](CODE_OF_CONDUCT.ru.md))
+- [Security Policy](.github/SECURITY.md) ([Русская версия](.github/SECURITY.ru.md))
+- [Changelog](CHANGELOG.md) ([Русская версия](CHANGELOG.ru.md))
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
