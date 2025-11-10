@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
       
       - name: Setup Swift
-        uses: swift-actions/setup-swift@v2.3.0
+        uses: swift-actions/setup-swift@latest
         with:
           swift-version: ${{ matrix.swift }}
       
@@ -175,6 +175,6 @@ jobs:
           echo "- Swift из Xcode latest-stable (для macOS и iOS)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Setup Swift Action:" >> $GITHUB_STEP_SUMMARY
-          echo "- swift-actions/setup-swift@v2.3.0 (для Linux)" >> $GITHUB_STEP_SUMMARY
+          echo "- swift-actions/setup-swift@latest (для Linux)" >> $GITHUB_STEP_SUMMARY
           echo "- Swift из Xcode (для macOS и iOS)" >> $GITHUB_STEP_SUMMARY
 
