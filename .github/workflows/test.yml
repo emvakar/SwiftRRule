@@ -55,7 +55,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ios-version: ["13", "14", "15", "16", "17", "18"]
+        ios-version: ["13", "14", "15", "16", "17", "18", "26.0"]
         include:
           - ios-version: "13"
             device: "iPhone 11"
@@ -69,7 +69,8 @@ jobs:
             device: "iPhone 15"
           - ios-version: "18"
             device: "iPhone 16"
-    
+          - ios-version: "26.0"
+            device: "iPhone 17"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
