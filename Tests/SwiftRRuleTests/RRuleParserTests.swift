@@ -241,5 +241,328 @@ final class RRuleParserTests: XCTestCase {
         XCTAssertEqual(rrule.interval, 2)
         XCTAssertEqual(rrule.count, 10)
     }
+    
+    // MARK: - Edge Cases and Error Detection
+    
+    func testParseEmptyStringEdgeCase() {
+        XCTAssertThrowsError(try RRule.parse("")) { error in
+            if case .emptyString = error as? RRuleParseError {
+                // Expected
+            } else {
+                XCTFail("Expected emptyString error")
+            }
+        }
+    }
+    
+    func testParseOnlyWhitespace() {
+        // Парсер может обработать пробелы как валидную строку или выбросить ошибку
+        // Проверяем, что парсер обрабатывает это корректно
+        XCTAssertThrowsError(try RRule.parse("   ")) { error in
+            // Может быть emptyString или missingFrequency
+            XCTAssertTrue(error is RRuleParseError)
+        }
+    }
+    
+    func testParseMissingFrequencyEdgeCase() {
+        XCTAssertThrowsError(try RRule.parse("INTERVAL=2;COUNT=10")) { error in
+            if case .missingFrequency = error as? RRuleParseError {
+                // Expected
+            } else {
+                XCTFail("Expected missingFrequency error")
+            }
+        }
+    }
+    
+    func testParseInvalidFrequencyEdgeCase() {
+        XCTAssertThrowsError(try RRule.parse("FREQ=INVALID")) { error in
+            if case .invalidFrequency(let freq) = error as? RRuleParseError {
+                XCTAssertEqual(freq, "INVALID")
+            } else {
+                XCTFail("Expected invalidFrequency error")
+            }
+        }
+    }
+    
+    func testParseInvalidIntervalString() {
+        XCTAssertThrowsError(try RRule.parse("FREQ=DAILY;INTERVAL=abc")) { error in
+            if case .invalidValue(let value, let key) = error as? RRuleParseError {
+                XCTAssertEqual(value, "abc")
+                XCTAssertEqual(key, "INTERVAL")
+            } else {
+                XCTFail("Expected invalidValue error for INTERVAL")
+            }
+        }
+    }
+    
+    func testParseInvalidCountString() {
+        XCTAssertThrowsError(try RRule.parse("FREQ=DAILY;COUNT=abc")) { error in
+            if case .invalidValue(let value, let key) = error as? RRuleParseError {
+                XCTAssertEqual(value, "abc")
+                XCTAssertEqual(key, "COUNT")
+            } else {
+                XCTFail("Expected invalidValue error for COUNT")
+            }
+        }
+    }
+    
+    func testParseNegativeInterval() {
+        // Отрицательный INTERVAL недопустим - парсер должен выбросить ошибку
+        XCTAssertThrowsError(try RRule.parse("FREQ=DAILY;INTERVAL=-1")) { error in
+            if case .invalidValue(let value, let key) = error as? RRuleParseError {
+                XCTAssertEqual(value, "-1")
+                XCTAssertEqual(key, "INTERVAL")
+            } else {
+                XCTFail("Expected invalidValue error for INTERVAL")
+            }
+        }
+    }
+    
+    func testParseZeroInterval() {
+        // INTERVAL=0 недопустим - парсер должен выбросить ошибку
+        XCTAssertThrowsError(try RRule.parse("FREQ=DAILY;INTERVAL=0")) { error in
+            if case .invalidValue(let value, let key) = error as? RRuleParseError {
+                XCTAssertEqual(value, "0")
+                XCTAssertEqual(key, "INTERVAL")
+            } else {
+                XCTFail("Expected invalidValue error for INTERVAL")
+            }
+        }
+    }
+    
+    func testParseZeroCount() {
+        // COUNT=0 недопустим - парсер должен выбросить ошибку
+        XCTAssertThrowsError(try RRule.parse("FREQ=DAILY;COUNT=0")) { error in
+            if case .invalidValue(let value, let key) = error as? RRuleParseError {
+                XCTAssertEqual(value, "0")
+                XCTAssertEqual(key, "COUNT")
+            } else {
+                XCTFail("Expected invalidValue error for COUNT")
+            }
+        }
+    }
+    
+    func testParseNegativeCount() {
+        // Отрицательный COUNT недопустим - парсер должен выбросить ошибку
+        XCTAssertThrowsError(try RRule.parse("FREQ=DAILY;COUNT=-1")) { error in
+            if case .invalidValue(let value, let key) = error as? RRuleParseError {
+                XCTAssertEqual(value, "-1")
+                XCTAssertEqual(key, "COUNT")
+            } else {
+                XCTFail("Expected invalidValue error for COUNT")
+            }
+        }
+    }
+    
+    func testParseInvalidBySecond() {
+        XCTAssertThrowsError(try RRule.parse("FREQ=DAILY;BYSECOND=abc")) { error in
+            if case .invalidValue(let value, let key) = error as? RRuleParseError {
+                XCTAssertEqual(value, "abc")
+                XCTAssertEqual(key, "BYSECOND")
+            } else {
+                XCTFail("Expected invalidValue error for BYSECOND")
+            }
+        }
+    }
+    
+    func testParseInvalidByMinute() {
+        XCTAssertThrowsError(try RRule.parse("FREQ=DAILY;BYMINUTE=abc")) { error in
+            if case .invalidValue(let value, let key) = error as? RRuleParseError {
+                XCTAssertEqual(value, "abc")
+                XCTAssertEqual(key, "BYMINUTE")
+            } else {
+                XCTFail("Expected invalidValue error for BYMINUTE")
+            }
+        }
+    }
+    
+    func testParseInvalidByHour() {
+        XCTAssertThrowsError(try RRule.parse("FREQ=DAILY;BYHOUR=abc")) { error in
+            if case .invalidValue(let value, let key) = error as? RRuleParseError {
+                XCTAssertEqual(value, "abc")
+                XCTAssertEqual(key, "BYHOUR")
+            } else {
+                XCTFail("Expected invalidValue error for BYHOUR")
+            }
+        }
+    }
+    
+    func testParseInvalidByMonthDay() {
+        XCTAssertThrowsError(try RRule.parse("FREQ=MONTHLY;BYMONTHDAY=abc")) { error in
+            if case .invalidValue(let value, let key) = error as? RRuleParseError {
+                XCTAssertEqual(value, "abc")
+                XCTAssertEqual(key, "BYMONTHDAY")
+            } else {
+                XCTFail("Expected invalidValue error for BYMONTHDAY")
+            }
+        }
+    }
+    
+    func testParseInvalidByYearDay() {
+        XCTAssertThrowsError(try RRule.parse("FREQ=YEARLY;BYYEARDAY=abc")) { error in
+            if case .invalidValue(let value, let key) = error as? RRuleParseError {
+                XCTAssertEqual(value, "abc")
+                XCTAssertEqual(key, "BYYEARDAY")
+            } else {
+                XCTFail("Expected invalidValue error for BYYEARDAY")
+            }
+        }
+    }
+    
+    func testParseInvalidByWeekNo() {
+        XCTAssertThrowsError(try RRule.parse("FREQ=YEARLY;BYWEEKNO=abc")) { error in
+            if case .invalidValue(let value, let key) = error as? RRuleParseError {
+                XCTAssertEqual(value, "abc")
+                XCTAssertEqual(key, "BYWEEKNO")
+            } else {
+                XCTFail("Expected invalidValue error for BYWEEKNO")
+            }
+        }
+    }
+    
+    func testParseInvalidByMonth() {
+        XCTAssertThrowsError(try RRule.parse("FREQ=YEARLY;BYMONTH=abc")) { error in
+            if case .invalidValue(let value, let key) = error as? RRuleParseError {
+                XCTAssertEqual(value, "abc")
+                XCTAssertEqual(key, "BYMONTH")
+            } else {
+                XCTFail("Expected invalidValue error for BYMONTH")
+            }
+        }
+    }
+    
+    func testParseInvalidBySetPos() {
+        XCTAssertThrowsError(try RRule.parse("FREQ=MONTHLY;BYSETPOS=abc")) { error in
+            if case .invalidValue(let value, let key) = error as? RRuleParseError {
+                XCTAssertEqual(value, "abc")
+                XCTAssertEqual(key, "BYSETPOS")
+            } else {
+                XCTFail("Expected invalidValue error for BYSETPOS")
+            }
+        }
+    }
+    
+    func testParseInvalidUntilFormat() {
+        XCTAssertThrowsError(try RRule.parse("FREQ=DAILY;UNTIL=INVALID")) { error in
+            // Парсер должен обработать неверный формат UNTIL
+            XCTAssertNotNil(error)
+        }
+    }
+    
+    func testParseDuplicateKeys() throws {
+        // Дублирующиеся ключи - последний должен перезаписать предыдущий
+        let rrule = try RRule.parse("FREQ=DAILY;COUNT=5;COUNT=10")
+        XCTAssertEqual(rrule.count, 10)
+    }
+    
+    func testParseLargeValues() throws {
+        // Большие значения для COUNT и INTERVAL
+        let rrule = try RRule.parse("FREQ=DAILY;INTERVAL=999999;COUNT=999999")
+        XCTAssertEqual(rrule.interval, 999999)
+        XCTAssertEqual(rrule.count, 999999)
+    }
+    
+    func testParseMultipleBySecond() throws {
+        let rrule = try RRule.parse("FREQ=DAILY;BYSECOND=0,15,30,45,60")
+        XCTAssertEqual(rrule.bySecond, [0, 15, 30, 45, 60])
+    }
+    
+    func testParseMultipleByMinute() throws {
+        let rrule = try RRule.parse("FREQ=DAILY;BYMINUTE=0,15,30,45")
+        XCTAssertEqual(rrule.byMinute, [0, 15, 30, 45])
+    }
+    
+    func testParseMultipleByHour() throws {
+        let rrule = try RRule.parse("FREQ=DAILY;BYHOUR=0,6,12,18,23")
+        XCTAssertEqual(rrule.byHour, [0, 6, 12, 18, 23])
+    }
+    
+    func testParseMultipleByMonthDay() throws {
+        let rrule = try RRule.parse("FREQ=MONTHLY;BYMONTHDAY=1,15,28,-1")
+        XCTAssertEqual(rrule.byMonthDay, [1, 15, 28, -1])
+    }
+    
+    func testParseMultipleByYearDay() throws {
+        let rrule = try RRule.parse("FREQ=YEARLY;BYYEARDAY=1,100,200,365,-1")
+        XCTAssertEqual(rrule.byYearDay, [1, 100, 200, 365, -1])
+    }
+    
+    func testParseMultipleByWeekNo() throws {
+        let rrule = try RRule.parse("FREQ=YEARLY;BYWEEKNO=1,26,52,-1")
+        XCTAssertEqual(rrule.byWeekNo, [1, 26, 52, -1])
+    }
+    
+    func testParseMultipleByMonth() throws {
+        let rrule = try RRule.parse("FREQ=YEARLY;BYMONTH=1,3,6,9,12")
+        XCTAssertEqual(rrule.byMonth, [1, 3, 6, 9, 12])
+    }
+    
+    func testParseMultipleBySetPos() throws {
+        let rrule = try RRule.parse("FREQ=MONTHLY;BYSETPOS=1,2,-1,-2")
+        XCTAssertEqual(rrule.bySetPos, [1, 2, -1, -2])
+    }
+    
+    func testParseMultipleByDay() throws {
+        let rrule = try RRule.parse("FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU")
+        XCTAssertNotNil(rrule.byDay)
+        XCTAssertEqual(rrule.byDay?.count, 7)
+    }
+    
+    func testParseByDayWithPositions() throws {
+        let rrule = try RRule.parse("FREQ=MONTHLY;BYDAY=1MO,2TU,-1FR")
+        XCTAssertNotNil(rrule.byDay)
+        XCTAssertEqual(rrule.byDay?.count, 3)
+    }
+    
+    func testParseUntilWithZ() throws {
+        // UNTIL с Z (UTC)
+        let rrule = try RRule.parse("FREQ=DAILY;UNTIL=20241231T120000Z")
+        XCTAssertNotNil(rrule.until)
+    }
+    
+    func testParseUntilWithoutZ() throws {
+        // UNTIL без Z (локальное время)
+        let rrule = try RRule.parse("FREQ=DAILY;UNTIL=20241231T120000")
+        XCTAssertNotNil(rrule.until)
+    }
+    
+    func testParseUntilDateOnly() throws {
+        // UNTIL только дата
+        let rrule = try RRule.parse("FREQ=DAILY;UNTIL=20241231")
+        XCTAssertNotNil(rrule.until)
+    }
+    
+    func testParseComplexRuleWithAllParams() throws {
+        // Сложное правило со всеми параметрами
+        let rrule = try RRule.parse("FREQ=WEEKLY;INTERVAL=2;COUNT=10;BYDAY=MO,WE,FR;BYHOUR=9,17;BYMINUTE=0,30;BYSECOND=0")
+        XCTAssertEqual(rrule.frequency, .weekly)
+        XCTAssertEqual(rrule.interval, 2)
+        XCTAssertEqual(rrule.count, 10)
+        XCTAssertNotNil(rrule.byDay)
+        XCTAssertNotNil(rrule.byHour)
+        XCTAssertNotNil(rrule.byMinute)
+        XCTAssertNotNil(rrule.bySecond)
+    }
+    
+    func testParseWithTrailingSemicolon() throws {
+        // Правило с завершающей точкой с запятой
+        let rrule = try RRule.parse("FREQ=DAILY;COUNT=10;")
+        XCTAssertEqual(rrule.frequency, .daily)
+        XCTAssertEqual(rrule.count, 10)
+    }
+    
+    func testParseWithLeadingSemicolon() throws {
+        // Правило с начальной точкой с запятой
+        let rrule = try RRule.parse(";FREQ=DAILY;COUNT=10")
+        XCTAssertEqual(rrule.frequency, .daily)
+        XCTAssertEqual(rrule.count, 10)
+    }
+    
+    func testParseWithEmptyValues() {
+        // Пустые значения должны обрабатываться как ошибка
+        XCTAssertThrowsError(try RRule.parse("FREQ=DAILY;BYDAY=")) { error in
+            // Может быть invalidFormat или другая ошибка
+            XCTAssertTrue(error is RRuleParseError)
+        }
+    }
 }
 

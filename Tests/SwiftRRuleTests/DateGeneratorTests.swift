@@ -475,5 +475,507 @@ final class DateGeneratorTests: XCTestCase {
             XCTAssertEqual(months, 3, "Date at index \(i) should be 3 months after previous")
         }
     }
+    
+    // MARK: - Advanced Edge Cases
+    
+    func testLeapYear() {
+        // Тест на високосный год - 29 февраля
+        // Генератор должен правильно обрабатывать високосные годы
+        var components = DateComponents()
+        components.year = 2024
+        components.month = 2
+        components.day = 29
+        components.hour = 12
+        components.minute = 0
+        components.second = 0
+        let leapYearDate = calendar.date(from: components)!
+        
+        let rrule = RRule(frequency: .yearly, count: 4)
+        let dates = rrule.generateDates(startingFrom: leapYearDate, calendar: calendar)
+        
+        XCTAssertEqual(dates.count, 4)
+        // Проверяем, что генератор правильно обрабатывает високосные годы
+        // В невисокосные годы 29 февраля становится 28 февраля или 1 марта
+        for date in dates {
+            let year = calendar.component(.year, from: date)
+            let month = calendar.component(.month, from: date)
+            let day = calendar.component(.day, from: date)
+            XCTAssertEqual(month, 2, "Month should be February")
+            
+            // Проверяем, что год високосный (делится на 4, но не на 100, или делится на 400)
+            let isLeapYear = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
+            if isLeapYear {
+                XCTAssertEqual(day, 29, "Day should be 29 in leap year \(year)")
+            } else {
+                // В невисокосные годы может быть 28 февраля или 1 марта
+                XCTAssertTrue(day == 28 || day == 1, "Day should be 28 or 1 in non-leap year \(year)")
+            }
+        }
+    }
+    
+    func testNonLeapYear() {
+        // Тест на невисокосный год - 28 февраля
+        var components = DateComponents()
+        components.year = 2023
+        components.month = 2
+        components.day = 28
+        components.hour = 12
+        components.minute = 0
+        components.second = 0
+        let nonLeapYearDate = calendar.date(from: components)!
+        
+        let rrule = RRule(frequency: .yearly, count: 4)
+        let dates = rrule.generateDates(startingFrom: nonLeapYearDate, calendar: calendar)
+        
+        XCTAssertEqual(dates.count, 4)
+        // Проверяем, что в невисокосные годы используется 28 февраля
+        for date in dates {
+            let month = calendar.component(.month, from: date)
+            let day = calendar.component(.day, from: date)
+            XCTAssertEqual(month, 2, "Month should be February")
+            XCTAssertLessThanOrEqual(day, 28, "Day should be 28 or less in non-leap years")
+        }
+    }
+    
+    func testMonthEndBoundary() {
+        // Тест на границу конца месяца - 31 января, затем февраль
+        var components = DateComponents()
+        components.year = 2024
+        components.month = 1
+        components.day = 31
+        components.hour = 12
+        components.minute = 0
+        components.second = 0
+        let monthEndDate = calendar.date(from: components)!
+        
+        let rrule = RRule(frequency: .monthly, count: 3, byMonthDay: [31])
+        let dates = rrule.generateDates(startingFrom: monthEndDate, calendar: calendar)
+        
+        XCTAssertGreaterThanOrEqual(dates.count, 1)
+        // Проверяем, что февраль не имеет 31 дня
+        for date in dates {
+            let month = calendar.component(.month, from: date)
+            if month == 2 {
+                let day = calendar.component(.day, from: date)
+                XCTAssertLessThan(day, 31, "February should not have 31 days")
+            }
+        }
+    }
+    
+    func testYearEndBoundary() {
+        // Тест на границу конца года - 31 декабря
+        var components = DateComponents()
+        components.year = 2024
+        components.month = 12
+        components.day = 31
+        components.hour = 12
+        components.minute = 0
+        components.second = 0
+        let yearEndDate = calendar.date(from: components)!
+        
+        let rrule = RRule(frequency: .yearly, count: 3)
+        let dates = rrule.generateDates(startingFrom: yearEndDate, calendar: calendar)
+        
+        XCTAssertEqual(dates.count, 3)
+        for date in dates {
+            let month = calendar.component(.month, from: date)
+            let day = calendar.component(.day, from: date)
+            XCTAssertEqual(month, 12, "Month should be December")
+            XCTAssertEqual(day, 31, "Day should be 31")
+        }
+    }
+    
+    func testBySetPosFirst() {
+        // BYSETPOS=1 - первое вхождение
+        let rrule = RRule(
+            frequency: .monthly,
+            count: 6,
+            byDay: [.monday, .wednesday, .friday],
+            bySetPos: [1]
+        )
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
+        
+        XCTAssertLessThanOrEqual(dates.count, 6)
+        // Проверяем, что каждая дата - первое вхождение дня недели в месяце
+        for date in dates {
+            let month = calendar.component(.month, from: date)
+            let weekday = calendar.component(.weekday, from: date)
+            let day = calendar.component(.day, from: date)
+            
+            // Находим первое вхождение этого дня недели в месяце
+            var firstOccurrence = DateComponents()
+            firstOccurrence.year = calendar.component(.year, from: date)
+            firstOccurrence.month = month
+            firstOccurrence.weekday = weekday
+            firstOccurrence.weekdayOrdinal = 1
+            if let firstDate = calendar.date(from: firstOccurrence) {
+                XCTAssertEqual(day, calendar.component(.day, from: firstDate), "Date should be first occurrence of weekday in month")
+            }
+        }
+    }
+    
+    func testBySetPosLast() {
+        // BYSETPOS=-1 - последнее вхождение
+        let rrule = RRule(
+            frequency: .monthly,
+            count: 6,
+            byDay: [.monday, .wednesday, .friday],
+            bySetPos: [-1]
+        )
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
+        
+        XCTAssertLessThanOrEqual(dates.count, 6)
+    }
+    
+    func testBySetPosMultiple() {
+        // BYSETPOS с несколькими значениями
+        let rrule = RRule(
+            frequency: .monthly,
+            count: 12,
+            byDay: [.monday],
+            bySetPos: [1, 2, -1]
+        )
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
+        
+        XCTAssertLessThanOrEqual(dates.count, 12)
+    }
+    
+    func testWkstMonday() {
+        // WKST=MO - неделя начинается с понедельника
+        let rrule = RRule(
+            frequency: .weekly,
+            count: 10,
+            wkst: .monday
+        )
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
+        
+        XCTAssertEqual(dates.count, 10)
+    }
+    
+    func testWkstSunday() {
+        // WKST=SU - неделя начинается с воскресенья
+        let rrule = RRule(
+            frequency: .weekly,
+            count: 10,
+            wkst: .sunday
+        )
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
+        
+        XCTAssertEqual(dates.count, 10)
+    }
+    
+    func testDailyWithAllByRules() {
+        // Комбинация всех BY* правил для DAILY
+        var components = DateComponents()
+        components.year = 2024
+        components.month = 1
+        components.day = 1
+        components.hour = 9
+        components.minute = 0
+        components.second = 0
+        let testStartDate = calendar.date(from: components)!
+        
+        let rrule = RRule(
+            frequency: .daily,
+            count: 10,
+            bySecond: [0],
+            byMinute: [0, 30],
+            byHour: [9, 17]
+        )
+        let dates = rrule.generateDates(startingFrom: testStartDate, calendar: calendar)
+        
+        XCTAssertEqual(dates.count, 10)
+        
+        for date in dates {
+            let hour = calendar.component(.hour, from: date)
+            let minute = calendar.component(.minute, from: date)
+            let second = calendar.component(.second, from: date)
+            XCTAssertTrue([9, 17].contains(hour), "Hour should be 9 or 17")
+            XCTAssertTrue([0, 30].contains(minute), "Minute should be 0 or 30")
+            XCTAssertEqual(second, 0, "Second should be 0")
+        }
+    }
+    
+    func testWeeklyWithByHour() {
+        // WEEKLY с BYHOUR - каждый понедельник в 9:00 и 17:00
+        var components = DateComponents()
+        components.year = 2024
+        components.month = 1
+        components.day = 1
+        components.hour = 9
+        components.minute = 0
+        components.second = 0
+        let testStartDate = calendar.date(from: components)!
+        
+        // Находим ближайший понедельник
+        let weekday = calendar.component(.weekday, from: testStartDate)
+        let daysToMonday = (2 - weekday + 7) % 7
+        let mondayDate = calendar.date(byAdding: .day, value: daysToMonday, to: testStartDate)!
+        
+        let rrule = RRule(
+            frequency: .weekly,
+            count: 10,
+            byHour: [9, 17],
+            byDay: [.monday]
+        )
+        let dates = rrule.generateDates(startingFrom: mondayDate, calendar: calendar)
+        
+        XCTAssertEqual(dates.count, 10)
+        
+        for date in dates {
+            let hour = calendar.component(.hour, from: date)
+            let weekday = calendar.component(.weekday, from: date)
+            XCTAssertTrue([9, 17].contains(hour), "Hour should be 9 or 17")
+            XCTAssertEqual(weekday, 2, "Weekday should be Monday")
+        }
+    }
+    
+    func testMonthlyWithByHourAndMinute() {
+        // MONTHLY с BYHOUR и BYMINUTE - первое число каждого месяца в 9:00 и 17:00
+        var components = DateComponents()
+        components.year = 2024
+        components.month = 1
+        components.day = 1
+        components.hour = 9
+        components.minute = 0
+        components.second = 0
+        let testStartDate = calendar.date(from: components)!
+        
+        let rrule = RRule(
+            frequency: .monthly,
+            count: 6,
+            byHour: [9, 17],
+            byMonthDay: [1]
+        )
+        let dates = rrule.generateDates(startingFrom: testStartDate, calendar: calendar)
+        
+        XCTAssertEqual(dates.count, 6)
+        
+        for date in dates {
+            let day = calendar.component(.day, from: date)
+            let hour = calendar.component(.hour, from: date)
+            XCTAssertEqual(day, 1, "Day should be 1")
+            XCTAssertTrue([9, 17].contains(hour), "Hour should be 9 or 17")
+        }
+    }
+    
+    func testYearlyWithByMonthAndByDay() {
+        // YEARLY с BYMONTH и BYDAY - первый понедельник января и июня
+        var components = DateComponents()
+        components.year = 2024
+        components.month = 1
+        components.day = 1
+        components.hour = 12
+        components.minute = 0
+        components.second = 0
+        let testStartDate = calendar.date(from: components)!
+        
+        let rrule = RRule(
+            frequency: .yearly,
+            count: 6,
+            byDay: [Weekday(dayOfWeek: 2, position: 1)], // Первый понедельник
+            byMonth: [1, 6]
+        )
+        let dates = rrule.generateDates(startingFrom: testStartDate, calendar: calendar)
+        
+        XCTAssertLessThanOrEqual(dates.count, 6)
+        
+        for date in dates {
+            let month = calendar.component(.month, from: date)
+            let weekday = calendar.component(.weekday, from: date)
+            XCTAssertTrue([1, 6].contains(month), "Month should be January or June")
+            XCTAssertEqual(weekday, 2, "Weekday should be Monday")
+        }
+    }
+    
+    func testDatesOrder() {
+        // Проверка, что даты идут в правильном порядке
+        let rrule = RRule(frequency: .daily, count: 100)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
+        
+        XCTAssertEqual(dates.count, 100)
+        
+        for i in 1..<dates.count {
+            XCTAssertLessThan(dates[i-1], dates[i], "Dates should be in ascending order")
+        }
+    }
+    
+    func testLargeCount() {
+        // Тест с большим COUNT
+        let rrule = RRule(frequency: .daily, count: 1000)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
+        
+        XCTAssertEqual(dates.count, 1000)
+        XCTAssertLessThan(dates.last!, calendar.date(byAdding: .year, value: 3, to: startDate)!)
+    }
+    
+    func testLargeInterval() {
+        // Тест с большим INTERVAL
+        let rrule = RRule(frequency: .yearly, interval: 10, count: 5)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
+        
+        XCTAssertEqual(dates.count, 5)
+        
+        for i in 1..<dates.count {
+            let years = calendar.dateComponents([.year], from: dates[i-1], to: dates[i]).year ?? 0
+            XCTAssertEqual(years, 10, "Years should be 10 apart")
+        }
+    }
+    
+    func testMultipleByMonthDay() {
+        // Несколько дней месяца
+        let rrule = RRule(
+            frequency: .monthly,
+            count: 12,
+            byMonthDay: [1, 15, 28]
+        )
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
+        
+        XCTAssertEqual(dates.count, 12)
+        
+        for date in dates {
+            let day = calendar.component(.day, from: date)
+            XCTAssertTrue([1, 15, 28].contains(day), "Day should be 1, 15, or 28")
+        }
+    }
+    
+    func testMultipleByYearDay() {
+        // Несколько дней года
+        let rrule = RRule(
+            frequency: .yearly,
+            count: 5,
+            byYearDay: [1, 100, 200, 365]
+        )
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
+        
+        XCTAssertLessThanOrEqual(dates.count, 5)
+    }
+    
+    func testMultipleByWeekNo() {
+        // Несколько недель года
+        let rrule = RRule(
+            frequency: .yearly,
+            count: 5,
+            byWeekNo: [1, 26, 52]
+        )
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
+        
+        XCTAssertLessThanOrEqual(dates.count, 5)
+    }
+    
+    func testNegativeByMonthDay() {
+        // Несколько отрицательных дней месяца
+        let rrule = RRule(
+            frequency: .monthly,
+            count: 12,
+            byMonthDay: [-1, -7]
+        )
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
+        
+        XCTAssertLessThanOrEqual(dates.count, 12)
+        
+        for date in dates {
+            let day = calendar.component(.day, from: date)
+            let daysInMonth = calendar.range(of: .day, in: .month, for: date)?.count ?? 0
+            // Проверяем, что день - это последний или седьмой с конца
+            XCTAssertTrue(day == daysInMonth || day == daysInMonth - 6, "Day should be last or 7th from last")
+        }
+    }
+    
+    func testDifferentTimeZone() {
+        // Тест с другим часовым поясом
+        var testCalendar = Calendar(identifier: .gregorian)
+        testCalendar.timeZone = TimeZone(identifier: "America/New_York")!
+        
+        var components = DateComponents()
+        components.year = 2024
+        components.month = 1
+        components.day = 1
+        components.hour = 9
+        components.minute = 0
+        components.second = 0
+        let testStartDate = testCalendar.date(from: components)!
+        
+        let rrule = RRule(frequency: .daily, count: 5, byHour: [9, 17])
+        let dates = rrule.generateDates(startingFrom: testStartDate, calendar: testCalendar)
+        
+        XCTAssertEqual(dates.count, 5)
+        
+        for date in dates {
+            let hour = testCalendar.component(.hour, from: date)
+            XCTAssertTrue([9, 17].contains(hour), "Hour should be 9 or 17 in New York timezone")
+        }
+    }
+    
+    func testStartDateNotMatchingRules() {
+        // Начальная дата не соответствует правилам
+        var components = DateComponents()
+        components.year = 2024
+        components.month = 1
+        components.day = 1
+        components.hour = 10
+        components.minute = 0
+        components.second = 0
+        let testStartDate = calendar.date(from: components)!
+        
+        // Правило требует 9:00 или 17:00, но начальная дата в 10:00
+        let rrule = RRule(frequency: .daily, count: 10, byHour: [9, 17])
+        let dates = rrule.generateDates(startingFrom: testStartDate, calendar: calendar)
+        
+        // Для DAILY с BYHOUR должна генерироваться дата в 9:00 и 17:00 того же дня
+        XCTAssertGreaterThanOrEqual(dates.count, 1)
+        
+        for date in dates {
+            let hour = calendar.component(.hour, from: date)
+            XCTAssertTrue([9, 17].contains(hour), "Hour should be 9 or 17")
+        }
+    }
+    
+    func testIntervalWithByDay() {
+        // INTERVAL с BYDAY
+        let rrule = RRule(
+            frequency: .weekly,
+            interval: 2,
+            count: 10,
+            byDay: [.monday, .wednesday, .friday]
+        )
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
+        
+        XCTAssertEqual(dates.count, 10)
+    }
+    
+    func testIntervalWithByMonth() {
+        // INTERVAL с BYMONTH
+        let rrule = RRule(
+            frequency: .yearly,
+            interval: 2,
+            count: 5,
+            byMonth: [1, 6]
+        )
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
+        
+        XCTAssertLessThanOrEqual(dates.count, 5)
+        
+        for date in dates {
+            let month = calendar.component(.month, from: date)
+            XCTAssertTrue([1, 6].contains(month), "Month should be January or June")
+        }
+    }
+    
+    func testUntilWithByDay() {
+        // UNTIL с BYDAY
+        let untilDate = calendar.date(byAdding: .day, value: 30, to: startDate)!
+        let rrule = RRule(
+            frequency: .weekly,
+            until: untilDate,
+            byDay: [.monday, .wednesday, .friday]
+        )
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
+        
+        XCTAssertGreaterThanOrEqual(dates.count, 1)
+        if let lastDate = dates.last {
+            XCTAssertLessThanOrEqual(lastDate, untilDate)
+        }
+    }
 }
 
