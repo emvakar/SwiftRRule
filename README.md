@@ -121,10 +121,6 @@ Current status:
 - ✅ RRule string generation
 - ✅ Comprehensive test coverage (430 tests)
 
-## Development Plan
-
-Detailed development plan is available in [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
-
 ## Documentation
 
 - [English Documentation](docs/README.en.md)

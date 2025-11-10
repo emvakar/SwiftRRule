@@ -121,10 +121,6 @@ let rruleString = rrule.toString()
 - ✅ Генерация строк RRule
 - ✅ Полное покрытие тестами (430 тестов)
 
-## План разработки
-
-Подробный план разработки доступен в файле [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
-
 ## Документация
 
 - [English Documentation](docs/README.en.md)
