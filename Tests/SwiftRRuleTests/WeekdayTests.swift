@@ -292,5 +292,345 @@ final class WeekdayTests: XCTestCase {
             XCTAssertEqual(weekday?.position, position)
         }
     }
+    
+    // MARK: - Additional Advanced Tests
+    
+    func testWeekdayAllConvenienceInitializersOrder() {
+        // Порядок convenience инициализаторов
+        XCTAssertEqual(Weekday.sunday.dayOfWeek, 1)
+        XCTAssertEqual(Weekday.monday.dayOfWeek, 2)
+        XCTAssertEqual(Weekday.tuesday.dayOfWeek, 3)
+        XCTAssertEqual(Weekday.wednesday.dayOfWeek, 4)
+        XCTAssertEqual(Weekday.thursday.dayOfWeek, 5)
+        XCTAssertEqual(Weekday.friday.dayOfWeek, 6)
+        XCTAssertEqual(Weekday.saturday.dayOfWeek, 7)
+    }
+    
+    func testWeekdayFromStringAllDaysCaseInsensitive() {
+        // Все дни недели из строки (регистронезависимо)
+        let days = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"]
+        let lowerDays = ["su", "mo", "tu", "we", "th", "fr", "sa"]
+        let mixedDays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+        
+        for (index, dayString) in days.enumerated() {
+            let weekday = Weekday(from: dayString)
+            XCTAssertNotNil(weekday)
+            XCTAssertEqual(weekday?.dayOfWeek, index + 1)
+        }
+        
+        for (index, dayString) in lowerDays.enumerated() {
+            let weekday = Weekday(from: dayString)
+            XCTAssertNotNil(weekday)
+            XCTAssertEqual(weekday?.dayOfWeek, index + 1)
+        }
+        
+        for (index, dayString) in mixedDays.enumerated() {
+            let weekday = Weekday(from: dayString)
+            XCTAssertNotNil(weekday)
+            XCTAssertEqual(weekday?.dayOfWeek, index + 1)
+        }
+    }
+    
+    func testWeekdayToStringAllDays() {
+        // toString для всех дней недели
+        XCTAssertEqual(Weekday.sunday.toString(), "SU")
+        XCTAssertEqual(Weekday.monday.toString(), "MO")
+        XCTAssertEqual(Weekday.tuesday.toString(), "TU")
+        XCTAssertEqual(Weekday.wednesday.toString(), "WE")
+        XCTAssertEqual(Weekday.thursday.toString(), "TH")
+        XCTAssertEqual(Weekday.friday.toString(), "FR")
+        XCTAssertEqual(Weekday.saturday.toString(), "SA")
+    }
+    
+    func testWeekdayToStringWithAllPositions() {
+        // toString для всех позиций
+        for position in 1...53 {
+            let weekday = Weekday(dayOfWeek: 2, position: position)
+            let result = weekday.toString()
+            XCTAssertTrue(result.contains("\(position)MO"))
+        }
+        
+        for position in -53...(-1) {
+            let weekday = Weekday(dayOfWeek: 2, position: position)
+            let result = weekday.toString()
+            XCTAssertTrue(result.contains("\(position)MO"))
+        }
+    }
+    
+    func testWeekdayEquatableAllDays() {
+        // Equatable для всех дней недели
+        XCTAssertEqual(Weekday.sunday, Weekday.sunday)
+        XCTAssertEqual(Weekday.monday, Weekday.monday)
+        XCTAssertEqual(Weekday.tuesday, Weekday.tuesday)
+        XCTAssertEqual(Weekday.wednesday, Weekday.wednesday)
+        XCTAssertEqual(Weekday.thursday, Weekday.thursday)
+        XCTAssertEqual(Weekday.friday, Weekday.friday)
+        XCTAssertEqual(Weekday.saturday, Weekday.saturday)
+        
+        XCTAssertNotEqual(Weekday.sunday, Weekday.monday)
+        XCTAssertNotEqual(Weekday.monday, Weekday.tuesday)
+    }
+    
+    func testWeekdayEquatableWithPositions() {
+        // Equatable с позициями
+        let weekday1 = Weekday(dayOfWeek: 2, position: 1)
+        let weekday2 = Weekday(dayOfWeek: 2, position: 1)
+        let weekday3 = Weekday(dayOfWeek: 2, position: 2)
+        
+        XCTAssertEqual(weekday1, weekday2)
+        XCTAssertNotEqual(weekday1, weekday3)
+    }
+    
+    func testWeekdayEquatableWithNilPositionAdvanced() {
+        // Equatable с nil позицией
+        let weekday1 = Weekday(dayOfWeek: 2, position: nil)
+        let weekday2 = Weekday.monday
+        let weekday3 = Weekday(dayOfWeek: 2, position: 1)
+        
+        XCTAssertEqual(weekday1, weekday2)
+        XCTAssertNotEqual(weekday1, weekday3)
+    }
+    
+    func testWeekdayHashableAllDays() {
+        // Hashable для всех дней недели
+        var set = Set<Weekday>()
+        set.insert(.sunday)
+        set.insert(.monday)
+        set.insert(.tuesday)
+        set.insert(.wednesday)
+        set.insert(.thursday)
+        set.insert(.friday)
+        set.insert(.saturday)
+        
+        XCTAssertEqual(set.count, 7)
+    }
+    
+    func testWeekdayHashableWithPositions() {
+        // Hashable с позициями
+        var set = Set<Weekday>()
+        set.insert(Weekday(dayOfWeek: 2, position: 1))
+        set.insert(Weekday(dayOfWeek: 2, position: 2))
+        set.insert(Weekday(dayOfWeek: 2, position: -1))
+        set.insert(Weekday(dayOfWeek: 2, position: 1)) // Дубликат
+        
+        XCTAssertEqual(set.count, 3)
+    }
+    
+    func testWeekdayCodableAllDays() throws {
+        // Codable для всех дней недели
+        let encoder = JSONEncoder()
+        let decoder = JSONDecoder()
+        
+        let allDays: [Weekday] = [.sunday, .monday, .tuesday, .wednesday, .thursday, .friday, .saturday]
+        
+        for day in allDays {
+            let data = try encoder.encode(day)
+            let decoded = try decoder.decode(Weekday.self, from: data)
+            XCTAssertEqual(day, decoded)
+        }
+    }
+    
+    func testWeekdayCodableArray() throws {
+        // Codable для массива дней недели
+        let encoder = JSONEncoder()
+        let decoder = JSONDecoder()
+        
+        let weekdays: [Weekday] = [
+            Weekday(dayOfWeek: 2, position: 1),
+            Weekday(dayOfWeek: 2, position: 2),
+            Weekday(dayOfWeek: 2, position: -1)
+        ]
+        
+        let data = try encoder.encode(weekdays)
+        let decoded = try decoder.decode([Weekday].self, from: data)
+        
+        XCTAssertEqual(weekdays, decoded)
+    }
+    
+    func testWeekdayFromStringWithAllPositionsRange() {
+        // Диапазон позиций
+        for position in 1...53 {
+            let weekday = Weekday(from: "\(position)MO")
+            XCTAssertNotNil(weekday)
+            XCTAssertEqual(weekday?.dayOfWeek, 2)
+            XCTAssertEqual(weekday?.position, position)
+        }
+        
+        for position in -53...(-1) {
+            let weekday = Weekday(from: "\(position)MO")
+            XCTAssertNotNil(weekday)
+            XCTAssertEqual(weekday?.dayOfWeek, 2)
+            XCTAssertEqual(weekday?.position, position)
+        }
+    }
+    
+    func testWeekdayFromStringWithAllDaysAndPositions() {
+        // Все дни недели с позициями
+        let days = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"]
+        
+        for (dayIndex, dayString) in days.enumerated() {
+            for position in [1, 2, 3, -2, -1] {
+                let weekday = Weekday(from: "\(position)\(dayString)")
+                XCTAssertNotNil(weekday)
+                XCTAssertEqual(weekday?.dayOfWeek, dayIndex + 1)
+                XCTAssertEqual(weekday?.position, position)
+            }
+        }
+    }
+    
+    func testWeekdayToStringRoundTrip() {
+        // Round-trip: toString -> from -> toString
+        let weekdays: [Weekday] = [
+            .sunday,
+            .monday,
+            Weekday(dayOfWeek: 2, position: 1),
+            Weekday(dayOfWeek: 2, position: -1)
+        ]
+        
+        for weekday in weekdays {
+            let string = weekday.toString()
+            let fromString = Weekday(from: string)
+            XCTAssertNotNil(fromString)
+            if let fromString = fromString {
+                XCTAssertEqual(weekday.dayOfWeek, fromString.dayOfWeek)
+                XCTAssertEqual(weekday.position, fromString.position)
+            }
+        }
+    }
+    
+    func testWeekdayInSet() {
+        // Дни недели в Set
+        var set = Set<Weekday>()
+        set.insert(.monday)
+        set.insert(.tuesday)
+        set.insert(.wednesday)
+        set.insert(.monday) // Дубликат
+        
+        XCTAssertEqual(set.count, 3)
+        XCTAssertTrue(set.contains(.monday))
+        XCTAssertTrue(set.contains(.tuesday))
+        XCTAssertTrue(set.contains(.wednesday))
+    }
+    
+    func testWeekdayInArray() {
+        // Дни недели в массиве
+        let array: [Weekday] = [.monday, .tuesday, .wednesday, .thursday, .friday]
+        XCTAssertEqual(array.count, 5)
+        XCTAssertTrue(array.contains(.monday))
+        XCTAssertTrue(array.contains(.friday))
+    }
+    
+    func testWeekdayFilter() {
+        // Фильтрация дней недели
+        let allDays: [Weekday] = [.sunday, .monday, .tuesday, .wednesday, .thursday, .friday, .saturday]
+        let weekdays = allDays.filter { [.monday, .tuesday, .wednesday, .thursday, .friday].contains($0) }
+        XCTAssertEqual(weekdays.count, 5)
+    }
+    
+    func testWeekdayMap() {
+        // Преобразование дней недели
+        let allDays: [Weekday] = [.sunday, .monday, .tuesday, .wednesday, .thursday, .friday, .saturday]
+        let dayOfWeeks = allDays.map { $0.dayOfWeek }
+        XCTAssertEqual(dayOfWeeks, [1, 2, 3, 4, 5, 6, 7])
+    }
+    
+    func testWeekdayReduce() {
+        // Сведение дней недели
+        let allDays: [Weekday] = [.sunday, .monday, .tuesday, .wednesday, .thursday, .friday, .saturday]
+        let combined = allDays.reduce("") { $0 + $1.toString() }
+        XCTAssertTrue(combined.contains("SU"))
+        XCTAssertTrue(combined.contains("MO"))
+        XCTAssertTrue(combined.contains("SA"))
+    }
+    
+    func testWeekdaySorted() {
+        // Сортировка дней недели
+        let allDays: [Weekday] = [.saturday, .friday, .thursday, .wednesday, .tuesday, .monday, .sunday]
+        let sorted = allDays.sorted { $0.dayOfWeek < $1.dayOfWeek }
+        XCTAssertEqual(sorted[0].dayOfWeek, 1)
+        XCTAssertEqual(sorted[6].dayOfWeek, 7)
+    }
+    
+    func testWeekdayForEach() {
+        // Итерация по дням недели
+        let allDays: [Weekday] = [.sunday, .monday, .tuesday, .wednesday, .thursday, .friday, .saturday]
+        var count = 0
+        allDays.forEach { _ in count += 1 }
+        XCTAssertEqual(count, 7)
+    }
+    
+    func testWeekdayDescription() {
+        // Описание дней недели
+        let weekday = Weekday.monday
+        let description = String(describing: weekday)
+        XCTAssertFalse(description.isEmpty)
+    }
+    
+    func testWeekdayDebugDescription() {
+        // Отладочное описание дней недели
+        let weekday = Weekday.monday
+        let description = String(describing: weekday)
+        XCTAssertFalse(description.isEmpty)
+    }
+    
+    func testWeekdayMemoryLayout() {
+        // Размер в памяти
+        let size = MemoryLayout<Weekday>.size
+        XCTAssertGreaterThan(size, 0)
+    }
+    
+    func testWeekdayMirror() {
+        // Зеркало для отладки
+        let weekday = Weekday.monday
+        let mirror = Mirror(reflecting: weekday)
+        XCTAssertNotNil(mirror)
+    }
+    
+    func testWeekdayStringInterpolation() {
+        // Интерполяция строк
+        let weekday = Weekday.monday
+        let string = "\(weekday)"
+        XCTAssertFalse(string.isEmpty)
+    }
+    
+    func testWeekdayComparison() {
+        // Сравнение дней недели
+        let monday = Weekday.monday
+        let tuesday = Weekday.tuesday
+        
+        XCTAssertEqual(monday, monday)
+        XCTAssertNotEqual(monday, tuesday)
+    }
+    
+    func testWeekdayWithPositionComparison() {
+        // Сравнение дней недели с позициями
+        let monday1 = Weekday(dayOfWeek: 2, position: 1)
+        let monday2 = Weekday(dayOfWeek: 2, position: 1)
+        let monday3 = Weekday(dayOfWeek: 2, position: 2)
+        
+        XCTAssertEqual(monday1, monday2)
+        XCTAssertNotEqual(monday1, monday3)
+    }
+    
+    func testWeekdayAllDaysArray() {
+        // Массив всех дней недели
+        let allDays: [Weekday] = [.sunday, .monday, .tuesday, .wednesday, .thursday, .friday, .saturday]
+        XCTAssertEqual(allDays.count, 7)
+        
+        for (index, day) in allDays.enumerated() {
+            XCTAssertEqual(day.dayOfWeek, index + 1)
+        }
+    }
+    
+    func testWeekdayConvenienceInitializersEquality() {
+        // Равенство convenience инициализаторов
+        XCTAssertEqual(Weekday.sunday, Weekday(dayOfWeek: 1, position: nil))
+        XCTAssertEqual(Weekday.monday, Weekday(dayOfWeek: 2, position: nil))
+        XCTAssertEqual(Weekday.tuesday, Weekday(dayOfWeek: 3, position: nil))
+        XCTAssertEqual(Weekday.wednesday, Weekday(dayOfWeek: 4, position: nil))
+        XCTAssertEqual(Weekday.thursday, Weekday(dayOfWeek: 5, position: nil))
+        XCTAssertEqual(Weekday.friday, Weekday(dayOfWeek: 6, position: nil))
+        XCTAssertEqual(Weekday.saturday, Weekday(dayOfWeek: 7, position: nil))
+    }
 }
 

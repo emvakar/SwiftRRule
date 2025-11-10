@@ -634,5 +634,387 @@ final class RRuleGeneratorTests: XCTestCase {
         // Проверяем, что дубликаты удалены (или сохранены - зависит от реализации)
         XCTAssertTrue(result.contains("BYHOUR"))
     }
+    
+    // MARK: - Additional Advanced Tests
+    
+    func testGenerateWithAllFrequencies() {
+        // Все частоты
+        let daily = RRule(frequency: .daily).toString()
+        let weekly = RRule(frequency: .weekly).toString()
+        let monthly = RRule(frequency: .monthly).toString()
+        let yearly = RRule(frequency: .yearly).toString()
+        
+        XCTAssertTrue(daily.contains("FREQ=DAILY"))
+        XCTAssertTrue(weekly.contains("FREQ=WEEKLY"))
+        XCTAssertTrue(monthly.contains("FREQ=MONTHLY"))
+        XCTAssertTrue(yearly.contains("FREQ=YEARLY"))
+    }
+    
+    func testGenerateWithAllWeekdays() {
+        // Все дни недели
+        let rrule = RRule(frequency: .weekly, byDay: [.sunday, .monday, .tuesday, .wednesday, .thursday, .friday, .saturday])
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("BYDAY"))
+        XCTAssertTrue(result.contains("SU") || result.contains("MO") || result.contains("TU"))
+    }
+    
+    func testGenerateWithAllMonths() {
+        // Все месяцы
+        let rrule = RRule(frequency: .yearly, byMonth: Array(1...12))
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("BYMONTH"))
+    }
+    
+    func testGenerateWithAllHours() {
+        // Все часы
+        let rrule = RRule(frequency: .daily, byHour: Array(0...23))
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("BYHOUR"))
+    }
+    
+    func testGenerateWithAllMinutes() {
+        // Все минуты (выборочно)
+        let rrule = RRule(frequency: .daily, byMinute: Array(0...59))
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("BYMINUTE"))
+    }
+    
+    func testGenerateWithAllSeconds() {
+        // Все секунды (выборочно)
+        let rrule = RRule(frequency: .daily, bySecond: Array(0...59))
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("BYSECOND"))
+    }
+    
+    func testGenerateWithNegativeByMonthDayRange() {
+        // Диапазон отрицательных дней месяца
+        let rrule = RRule(frequency: .monthly, byMonthDay: Array(-7...(-1)))
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("BYMONTHDAY"))
+        XCTAssertTrue(result.contains("-"))
+    }
+    
+    func testGenerateWithNegativeByYearDayRange() {
+        // Диапазон отрицательных дней года
+        let rrule = RRule(frequency: .yearly, byYearDay: Array(-7...(-1)))
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("BYYEARDAY"))
+        XCTAssertTrue(result.contains("-"))
+    }
+    
+    func testGenerateWithNegativeByWeekNoRange() {
+        // Диапазон отрицательных недель года
+        let rrule = RRule(frequency: .yearly, byWeekNo: Array(-4...(-1)))
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("BYWEEKNO"))
+        XCTAssertTrue(result.contains("-"))
+    }
+    
+    func testGenerateWithNegativeBySetPosRange() {
+        // Диапазон отрицательных BYSETPOS
+        let rrule = RRule(frequency: .monthly, bySetPos: Array(-4...(-1)))
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("BYSETPOS"))
+        XCTAssertTrue(result.contains("-"))
+    }
+    
+    func testGenerateWithByDayPositionsRange() {
+        // Диапазон позиций BYDAY
+        let rrule = RRule(
+            frequency: .monthly,
+            byDay: [
+                Weekday(dayOfWeek: 2, position: 1),
+                Weekday(dayOfWeek: 2, position: 2),
+                Weekday(dayOfWeek: 2, position: 3),
+                Weekday(dayOfWeek: 2, position: -2),
+                Weekday(dayOfWeek: 2, position: -1)
+            ]
+        )
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("BYDAY"))
+    }
+    
+    func testGenerateWithUntilAtMidnight() {
+        // UNTIL в полночь
+        let calendar = Calendar(identifier: .gregorian)
+        var components = DateComponents()
+        components.year = 2024
+        components.month = 12
+        components.day = 31
+        components.hour = 0
+        components.minute = 0
+        components.second = 0
+        let untilDate = calendar.date(from: components)!
+        
+        let rrule = RRule(frequency: .daily, until: untilDate)
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("UNTIL="))
+    }
+    
+    func testGenerateWithUntilAtEndOfDay() {
+        // UNTIL в конец дня
+        let calendar = Calendar(identifier: .gregorian)
+        var components = DateComponents()
+        components.year = 2024
+        components.month = 12
+        components.day = 31
+        components.hour = 23
+        components.minute = 59
+        components.second = 59
+        let untilDate = calendar.date(from: components)!
+        
+        let rrule = RRule(frequency: .daily, until: untilDate)
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("UNTIL="))
+    }
+    
+    func testGenerateWithUntilInFuture() {
+        // UNTIL в будущем
+        let calendar = Calendar(identifier: .gregorian)
+        var components = DateComponents()
+        components.year = 2099
+        components.month = 12
+        components.day = 31
+        components.hour = 12
+        components.minute = 0
+        components.second = 0
+        let untilDate = calendar.date(from: components)!
+        
+        let rrule = RRule(frequency: .daily, until: untilDate)
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("UNTIL="))
+    }
+    
+    func testGenerateWithUntilInPast() {
+        // UNTIL в прошлом
+        let calendar = Calendar(identifier: .gregorian)
+        var components = DateComponents()
+        components.year = 2000
+        components.month = 1
+        components.day = 1
+        components.hour = 12
+        components.minute = 0
+        components.second = 0
+        let untilDate = calendar.date(from: components)!
+        
+        let rrule = RRule(frequency: .daily, until: untilDate)
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("UNTIL="))
+    }
+    
+    func testGenerateWithIntervalOne() {
+        // INTERVAL=1 не должен включаться (по умолчанию)
+        let rrule = RRule(frequency: .daily, interval: 1)
+        let result = rrule.toString()
+        XCTAssertFalse(result.contains("INTERVAL=1"))
+    }
+    
+    func testGenerateWithIntervalMax() {
+        // Максимальный INTERVAL
+        let rrule = RRule(frequency: .daily, interval: 999999)
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("INTERVAL=999999"))
+    }
+    
+    func testGenerateWithCountMax() {
+        // Максимальный COUNT
+        let rrule = RRule(frequency: .daily, count: 999999)
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("COUNT=999999"))
+    }
+    
+    func testGenerateWithMultipleByRules() {
+        // Множественные BY* правила
+        let rrule = RRule(
+            frequency: .daily,
+            bySecond: [0, 30],
+            byMinute: [0, 15, 30, 45],
+            byHour: [9, 12, 15, 18],
+            byDay: [.monday, .wednesday, .friday],
+            byMonthDay: [1, 15],
+            byMonth: [1, 6, 12]
+        )
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("BYSECOND"))
+        XCTAssertTrue(result.contains("BYMINUTE"))
+        XCTAssertTrue(result.contains("BYHOUR"))
+        XCTAssertTrue(result.contains("BYDAY"))
+        XCTAssertTrue(result.contains("BYMONTHDAY"))
+        XCTAssertTrue(result.contains("BYMONTH"))
+    }
+    
+    func testGenerateWithWkstAllDays() {
+        // Все возможные WKST
+        let sunday = RRule(frequency: .weekly, wkst: .sunday).toString()
+        let monday = RRule(frequency: .weekly, wkst: .monday).toString()
+        let tuesday = RRule(frequency: .weekly, wkst: .tuesday).toString()
+        let wednesday = RRule(frequency: .weekly, wkst: .wednesday).toString()
+        let thursday = RRule(frequency: .weekly, wkst: .thursday).toString()
+        let friday = RRule(frequency: .weekly, wkst: .friday).toString()
+        let saturday = RRule(frequency: .weekly, wkst: .saturday).toString()
+        
+        XCTAssertTrue(sunday.contains("WKST=SU"))
+        XCTAssertFalse(monday.contains("WKST=MO")) // По умолчанию
+        XCTAssertTrue(tuesday.contains("WKST=TU"))
+        XCTAssertTrue(wednesday.contains("WKST=WE"))
+        XCTAssertTrue(thursday.contains("WKST=TH"))
+        XCTAssertTrue(friday.contains("WKST=FR"))
+        XCTAssertTrue(saturday.contains("WKST=SA"))
+    }
+    
+    func testGenerateWithRealWorldExample1() {
+        // Реальный пример: каждую неделю в понедельник, среду и пятницу
+        let rrule = RRule(frequency: .weekly, count: 10, byDay: [.monday, .wednesday, .friday])
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("FREQ=WEEKLY"))
+        XCTAssertTrue(result.contains("COUNT=10"))
+        XCTAssertTrue(result.contains("BYDAY"))
+    }
+    
+    func testGenerateWithRealWorldExample2() {
+        // Реальный пример: каждый месяц в первое и 15-е число
+        let rrule = RRule(frequency: .monthly, count: 12, byMonthDay: [1, 15])
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("FREQ=MONTHLY"))
+        XCTAssertTrue(result.contains("COUNT=12"))
+        XCTAssertTrue(result.contains("BYMONTHDAY=1,15"))
+    }
+    
+    func testGenerateWithRealWorldExample3() {
+        // Реальный пример: каждый год в январе и июне
+        let rrule = RRule(frequency: .yearly, count: 10, byMonth: [1, 6])
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("FREQ=YEARLY"))
+        XCTAssertTrue(result.contains("COUNT=10"))
+        XCTAssertTrue(result.contains("BYMONTH=1,6"))
+    }
+    
+    func testGenerateWithRealWorldExample4() {
+        // Реальный пример: каждый день в 9:00 и 17:00
+        let rrule = RRule(frequency: .daily, count: 10, byHour: [9, 17])
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("FREQ=DAILY"))
+        XCTAssertTrue(result.contains("COUNT=10"))
+        XCTAssertTrue(result.contains("BYHOUR=9,17"))
+    }
+    
+    func testGenerateWithRealWorldExample5() {
+        // Реальный пример: каждые 2 недели в понедельник и пятницу
+        let rrule = RRule(frequency: .weekly, interval: 2, count: 10, byDay: [.monday, .friday])
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("FREQ=WEEKLY"))
+        XCTAssertTrue(result.contains("INTERVAL=2"))
+        XCTAssertTrue(result.contains("COUNT=10"))
+        XCTAssertTrue(result.contains("BYDAY"))
+    }
+    
+    func testGenerateWithRealWorldExample6() {
+        // Реальный пример: каждый месяц в первый понедельник
+        let rrule = RRule(frequency: .monthly, count: 6, byDay: [Weekday(dayOfWeek: 2, position: 1)])
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("FREQ=MONTHLY"))
+        XCTAssertTrue(result.contains("COUNT=6"))
+        XCTAssertTrue(result.contains("BYDAY=1MO"))
+    }
+    
+    func testGenerateWithRealWorldExample7() {
+        // Реальный пример: каждый год в последнюю пятницу декабря
+        let rrule = RRule(
+            frequency: .yearly,
+            count: 5,
+            byDay: [Weekday(dayOfWeek: 6, position: -1)],
+            byMonth: [12]
+        )
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("FREQ=YEARLY"))
+        XCTAssertTrue(result.contains("COUNT=5"))
+        XCTAssertTrue(result.contains("BYMONTH=12"))
+        XCTAssertTrue(result.contains("BYDAY=-1FR"))
+    }
+    
+    func testGenerateWithRealWorldExample8() {
+        // Реальный пример: каждые 3 месяца в первое число
+        let rrule = RRule(frequency: .monthly, interval: 3, count: 4, byMonthDay: [1])
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("FREQ=MONTHLY"))
+        XCTAssertTrue(result.contains("INTERVAL=3"))
+        XCTAssertTrue(result.contains("COUNT=4"))
+        XCTAssertTrue(result.contains("BYMONTHDAY=1"))
+    }
+    
+    func testGenerateWithRealWorldExample9() {
+        // Реальный пример: каждый день в :00 и :30 минут
+        let rrule = RRule(frequency: .daily, count: 10, byMinute: [0, 30])
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("FREQ=DAILY"))
+        XCTAssertTrue(result.contains("COUNT=10"))
+        XCTAssertTrue(result.contains("BYMINUTE=0,30"))
+    }
+    
+    func testGenerateWithRealWorldExample10() {
+        // Реальный пример: каждую неделю в рабочие дни
+        let rrule = RRule(frequency: .weekly, count: 10, byDay: [.monday, .tuesday, .wednesday, .thursday, .friday])
+        let result = rrule.toString()
+        XCTAssertTrue(result.contains("FREQ=WEEKLY"))
+        XCTAssertTrue(result.contains("COUNT=10"))
+        XCTAssertTrue(result.contains("BYDAY"))
+    }
+    
+    func testGenerateRoundTripWithAllFrequencies() throws {
+        // Round-trip для всех частот
+        for frequency in [Frequency.daily, .weekly, .monthly, .yearly] {
+            let original = "FREQ=\(frequency.rawValue);COUNT=10"
+            let rrule = try RRule.parse(original)
+            let generated = rrule.toString()
+            let reparsed = try RRule.parse(generated)
+            
+            XCTAssertEqual(rrule.frequency, reparsed.frequency)
+            XCTAssertEqual(rrule.count, reparsed.count)
+        }
+    }
+    
+    func testGenerateRoundTripWithAllByRules() throws {
+        // Round-trip для всех BY* правил
+        let original = "FREQ=DAILY;BYSECOND=0,30;BYMINUTE=0,15,30,45;BYHOUR=9,12,15,18;BYDAY=MO,WE,FR;BYMONTHDAY=1,15;BYMONTH=1,6,12;BYSETPOS=1,-1"
+        let rrule = try RRule.parse(original)
+        let generated = rrule.toString()
+        let reparsed = try RRule.parse(generated)
+        
+        XCTAssertEqual(rrule.frequency, reparsed.frequency)
+        XCTAssertEqual(rrule.bySecond, reparsed.bySecond)
+        XCTAssertEqual(rrule.byMinute, reparsed.byMinute)
+        XCTAssertEqual(rrule.byHour, reparsed.byHour)
+        XCTAssertEqual(rrule.byDay?.count, reparsed.byDay?.count)
+        XCTAssertEqual(rrule.byMonthDay, reparsed.byMonthDay)
+        XCTAssertEqual(rrule.byMonth, reparsed.byMonth)
+        XCTAssertEqual(rrule.bySetPos, reparsed.bySetPos)
+    }
+    
+    func testGenerateConsistency() {
+        // Согласованность генерации
+        let rrule1 = RRule(frequency: .daily, count: 10)
+        let rrule2 = RRule(frequency: .daily, count: 10)
+        
+        let result1 = rrule1.toString()
+        let result2 = rrule2.toString()
+        
+        XCTAssertEqual(result1, result2)
+    }
+    
+    func testGenerateOrder() {
+        // Порядок параметров в выводе
+        let rrule = RRule(
+            frequency: .daily,
+            interval: 2,
+            count: 10,
+            bySecond: [0],
+            byMinute: [0],
+            byHour: [9]
+        )
+        let result = rrule.toString()
+        
+        // FREQ должен быть первым
+        XCTAssertTrue(result.hasPrefix("FREQ="))
+    }
 }
 
