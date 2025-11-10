@@ -53,7 +53,7 @@ jobs:
             SECURITY.md
       
       - name: Upload archive
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: SwiftRRule-${{ github.event.release.tag_name }}
           path: SwiftRRule-${{ github.event.release.tag_name }}.tar.gz
