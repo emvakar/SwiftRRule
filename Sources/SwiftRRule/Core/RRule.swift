@@ -72,6 +72,15 @@ public struct RRule: Codable, Equatable {
         return generator.generateDates(startingFrom: startDate)
     }
     
+    // MARK: - String Generation
+    
+    /// Генерация строки RRule
+    /// - Returns: Строка в формате RRule
+    public func toString() -> String {
+        let generator = RRuleGenerator(rrule: self)
+        return generator.generate()
+    }
+    
     /// Инициализация RRule
     public init(
         frequency: Frequency,

@@ -66,6 +66,10 @@ let monthlyRule = try RRule.parse("FREQ=MONTHLY;BYMONTHDAY=1,15")
 // Генерация дат
 let dates = rrule.generateDates(startingFrom: Date())
 // Результат: массив дат, соответствующих правилу повторения
+
+// Генерация строки RRule
+let rruleString = rrule.toString()
+// Результат: "FREQ=DAILY;INTERVAL=2;COUNT=10"
 ```
 
 ## Статус разработки
@@ -77,7 +81,7 @@ let dates = rrule.generateDates(startingFrom: Date())
 - ✅ Основные типы данных (Frequency, Weekday, RRule)
 - ✅ Парсинг RRule
 - ✅ Генерация дат
-- 🚧 Генерация строк RRule (в разработке)
+- ✅ Генерация строк RRule
 
 ## План разработки
 
