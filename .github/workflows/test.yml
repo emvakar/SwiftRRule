@@ -1,0 +1,116 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }} - Swift ${{ matrix.swift }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+        swift: ["5.9", "6.0"]
+        include:
+          - os: macos-latest
+            platform: "macOS"
+          - os: ubuntu-latest
+            platform: "Linux"
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v1
+        with:
+          swift-version: ${{ matrix.swift }}
+      
+      - name: Cache Swift Package Manager
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+      
+      - name: Build
+        run: swift build
+      
+      - name: Test
+        run: swift test
+      
+      - name: Test Results
+        if: always()
+        run: |
+          echo "Tests completed on ${{ matrix.platform }} with Swift ${{ matrix.swift }}"
+
+  test-platforms:
+    name: Test on ${{ matrix.platform }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [iOS, macOS, tvOS, watchOS]
+        include:
+          - platform: iOS
+            destination: "platform=iOS Simulator,name=iPhone 15"
+          - platform: macOS
+            destination: "platform=macOS"
+          - platform: tvOS
+            destination: "platform=tvOS Simulator,name=Apple TV"
+          - platform: watchOS
+            destination: "platform=watchOS Simulator,name=Apple Watch Series 9 (45mm)"
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      
+      - name: Build for ${{ matrix.platform }}
+        run: |
+          xcodebuild -scheme SwiftRRule \
+            -destination "${{ matrix.destination }}" \
+            -configuration Debug \
+            clean build
+      
+      - name: Test for ${{ matrix.platform }}
+        run: |
+          xcodebuild test \
+            -scheme SwiftRRule \
+            -destination "${{ matrix.destination }}" \
+            -configuration Debug \
+            -enableCodeCoverage YES
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [test, test-platforms]
+    if: always()
+    
+    steps:
+      - name: Summary
+        run: |
+          echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All tests completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Tested Platforms:" >> $GITHUB_STEP_SUMMARY
+          echo "- macOS" >> $GITHUB_STEP_SUMMARY
+          echo "- Linux (Ubuntu)" >> $GITHUB_STEP_SUMMARY
+          echo "- iOS" >> $GITHUB_STEP_SUMMARY
+          echo "- tvOS" >> $GITHUB_STEP_SUMMARY
+          echo "- watchOS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Swift Versions:" >> $GITHUB_STEP_SUMMARY
+          echo "- Swift 5.9" >> $GITHUB_STEP_SUMMARY
+          echo "- Swift 6.0" >> $GITHUB_STEP_SUMMARY
+
