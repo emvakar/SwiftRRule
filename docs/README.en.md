@@ -30,7 +30,7 @@ Add SwiftRRule to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/your-username/SwiftRRule.git", from: "1.0.0")
+    .package(url: "https://github.com/emvakar/SwiftRRule.git", from: "1.0.0")
 ]
 ```
 
@@ -48,7 +48,7 @@ targets: [
 ### Xcode
 
 1. File → Add Packages...
-2. Enter: `https://github.com/your-username/SwiftRRule.git`
+2. Enter: `https://github.com/emvakar/SwiftRRule.git`
 3. Select version and add to your target
 
 ## Quick Start

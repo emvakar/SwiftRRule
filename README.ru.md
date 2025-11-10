@@ -48,7 +48,7 @@ SwiftRRule позволяет парсить, генерировать и выч
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/your-username/SwiftRRule.git", from: "1.0.0")
+    .package(url: "https://github.com/emvakar/SwiftRRule.git", from: "1.0.0")
 ]
 ```
 

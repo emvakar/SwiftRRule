@@ -30,7 +30,7 @@ SwiftRRule — это Swift-библиотека для парсинга, ген
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/your-username/SwiftRRule.git", from: "1.0.0")
+    .package(url: "https://github.com/emvakar/SwiftRRule.git", from: "1.0.0")
 ]
 ```
 
@@ -48,7 +48,7 @@ targets: [
 ### Xcode
 
 1. File → Add Packages...
-2. Введите: `https://github.com/your-username/SwiftRRule.git`
+2. Введите: `https://github.com/emvakar/SwiftRRule.git`
 3. Выберите версию и добавьте в ваш target
 
 ## Быстрый старт
