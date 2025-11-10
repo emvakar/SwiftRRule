@@ -33,7 +33,7 @@ final class DateGeneratorTests: XCTestCase {
     
     func testDailyBasic() {
         let rrule = RRule(frequency: .daily, count: 5)
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 5)
         XCTAssertEqual(dates[0], startDate)
@@ -41,7 +41,7 @@ final class DateGeneratorTests: XCTestCase {
     
     func testDailyWithInterval() {
         let rrule = RRule(frequency: .daily, interval: 2, count: 5)
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 5)
         
@@ -56,7 +56,7 @@ final class DateGeneratorTests: XCTestCase {
     
     func testWeeklyBasic() {
         let rrule = RRule(frequency: .weekly, count: 5)
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 5)
     }
@@ -64,7 +64,7 @@ final class DateGeneratorTests: XCTestCase {
     func testWeeklyWithByDay() {
         // Понедельник, среда, пятница
         let rrule = RRule(frequency: .weekly, count: 9, byDay: [.monday, .wednesday, .friday])
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 9)
         
@@ -80,7 +80,7 @@ final class DateGeneratorTests: XCTestCase {
     
     func testMonthlyBasic() {
         let rrule = RRule(frequency: .monthly, count: 12)
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 12)
     }
@@ -88,7 +88,7 @@ final class DateGeneratorTests: XCTestCase {
     func testMonthlyWithByMonthDay() {
         // Первое и 15-е число каждого месяца
         let rrule = RRule(frequency: .monthly, count: 6, byMonthDay: [1, 15])
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 6)
         
@@ -103,7 +103,7 @@ final class DateGeneratorTests: XCTestCase {
     
     func testYearlyBasic() {
         let rrule = RRule(frequency: .yearly, count: 5)
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 5)
     }
@@ -112,7 +112,7 @@ final class DateGeneratorTests: XCTestCase {
     
     func testWithCount() {
         let rrule = RRule(frequency: .daily, count: 10)
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 10)
     }
@@ -122,7 +122,7 @@ final class DateGeneratorTests: XCTestCase {
     func testWithUntil() {
         let untilDate = calendar.date(byAdding: .day, value: 10, to: startDate)!
         let rrule = RRule(frequency: .daily, until: untilDate)
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertLessThanOrEqual(dates.count, 11) // Может быть меньше из-за фильтрации
         if let lastDate = dates.last {
@@ -139,7 +139,7 @@ final class DateGeneratorTests: XCTestCase {
             count: 10,
             byDay: [.monday, .wednesday, .friday]
         )
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 10)
     }
@@ -159,16 +159,9 @@ final class DateGeneratorTests: XCTestCase {
         let testStartDate = calendar.date(from: components)!
         
         let rrule = RRule(frequency: .daily, count: 10, byHour: [9, 17])
-        let dates = rrule.generateDates(startingFrom: testStartDate)
+        let dates = rrule.generateDates(startingFrom: testStartDate, calendar: calendar)
         
-        // TODO: Исправить логику генератора для работы с BYHOUR
-        // Временно пропускаем тест, если даты не генерируются
-        guard dates.count > 0 else {
-            XCTSkip("DateGenerator не генерирует даты с BYHOUR (требует доработки)")
-            return
-        }
-        
-        XCTAssertLessThanOrEqual(dates.count, 10, "Should not exceed count")
+        XCTAssertEqual(dates.count, 10, "Should generate exactly 10 dates (2 hours per day for 5 days)")
         
         for date in dates {
             let hour = calendar.component(.hour, from: date)
@@ -179,7 +172,7 @@ final class DateGeneratorTests: XCTestCase {
     func testWithByMinute() {
         // Каждый день в :00 и :30 минут
         let rrule = RRule(frequency: .daily, count: 10, byMinute: [0, 30])
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 10)
         
@@ -192,7 +185,7 @@ final class DateGeneratorTests: XCTestCase {
     func testWithBySecond() {
         // Каждый день в :00 и :30 секунд
         let rrule = RRule(frequency: .daily, count: 10, bySecond: [0, 30])
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 10)
         
@@ -205,7 +198,7 @@ final class DateGeneratorTests: XCTestCase {
     func testWithByMonth() {
         // Каждый год в январе, июне и декабре
         let rrule = RRule(frequency: .yearly, count: 9, byMonth: [1, 6, 12])
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 9)
         
@@ -218,7 +211,7 @@ final class DateGeneratorTests: XCTestCase {
     func testWithByYearDay() {
         // Первый и последний день года
         let rrule = RRule(frequency: .yearly, count: 4, byYearDay: [1, -1])
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 4)
     }
@@ -226,7 +219,7 @@ final class DateGeneratorTests: XCTestCase {
     func testWithByWeekNo() {
         // Первая и последняя неделя года
         let rrule = RRule(frequency: .yearly, count: 4, byWeekNo: [1, -1])
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertLessThanOrEqual(dates.count, 4)
     }
@@ -244,7 +237,7 @@ final class DateGeneratorTests: XCTestCase {
         let testStartDate = calendar.date(from: components)!
         
         let rrule = RRule(frequency: .monthly, count: 6, byMonthDay: [-1])
-        let dates = rrule.generateDates(startingFrom: testStartDate)
+        let dates = rrule.generateDates(startingFrom: testStartDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 6)
         
@@ -260,7 +253,7 @@ final class DateGeneratorTests: XCTestCase {
     func testWithCountZero() {
         // COUNT=0 не должен генерировать даты
         let rrule = RRule(frequency: .daily, count: 0)
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 0)
     }
@@ -268,7 +261,7 @@ final class DateGeneratorTests: XCTestCase {
     func testWithCountOne() {
         // COUNT=1 должен генерировать только одну дату
         let rrule = RRule(frequency: .daily, count: 1)
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 1)
         XCTAssertEqual(dates[0], startDate)
@@ -278,7 +271,7 @@ final class DateGeneratorTests: XCTestCase {
         // UNTIL до начальной даты не должен генерировать даты
         let untilDate = calendar.date(byAdding: .day, value: -1, to: startDate)!
         let rrule = RRule(frequency: .daily, until: untilDate)
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 0)
     }
@@ -286,7 +279,7 @@ final class DateGeneratorTests: XCTestCase {
     func testWithUntilSameAsStartDate() {
         // UNTIL в тот же день, что и начальная дата
         let rrule = RRule(frequency: .daily, until: startDate)
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertLessThanOrEqual(dates.count, 1)
         if let firstDate = dates.first {
@@ -297,7 +290,7 @@ final class DateGeneratorTests: XCTestCase {
     func testWithLargeInterval() {
         // Большой интервал
         let rrule = RRule(frequency: .daily, interval: 30, count: 5)
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 5)
         
@@ -311,7 +304,7 @@ final class DateGeneratorTests: XCTestCase {
     func testMonthlyWithByDayPosition() {
         // Второй понедельник каждого месяца
         let rrule = RRule(frequency: .monthly, count: 6, byDay: [Weekday(dayOfWeek: 2, position: 2)])
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertLessThanOrEqual(dates.count, 6)
         
@@ -324,7 +317,7 @@ final class DateGeneratorTests: XCTestCase {
     func testMonthlyWithLastFriday() {
         // Последняя пятница каждого месяца
         let rrule = RRule(frequency: .monthly, count: 6, byDay: [Weekday(dayOfWeek: 6, position: -1)])
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertLessThanOrEqual(dates.count, 6)
         
@@ -337,7 +330,7 @@ final class DateGeneratorTests: XCTestCase {
     func testYearlyWithByDayPosition() {
         // Первый понедельник года
         let rrule = RRule(frequency: .yearly, count: 3, byDay: [Weekday(dayOfWeek: 2, position: 1)])
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertLessThanOrEqual(dates.count, 3)
     }
@@ -362,16 +355,9 @@ final class DateGeneratorTests: XCTestCase {
             byMinute: [0, 30],
             byHour: [9, 17]
         )
-        let dates = rrule.generateDates(startingFrom: testStartDate)
+        let dates = rrule.generateDates(startingFrom: testStartDate, calendar: calendar)
         
-        // TODO: Исправить логику генератора для работы с комбинацией BYHOUR и BYMINUTE
-        // Временно пропускаем тест, если даты не генерируются
-        guard dates.count > 0 else {
-            XCTSkip("DateGenerator не генерирует даты с комбинацией BYHOUR и BYMINUTE (требует доработки)")
-            return
-        }
-        
-        XCTAssertLessThanOrEqual(dates.count, 8, "Should not exceed count")
+        XCTAssertEqual(dates.count, 8, "Should generate exactly 8 dates (4 combinations per day for 2 days)")
         
         for date in dates {
             let hour = calendar.component(.hour, from: date)
@@ -389,7 +375,7 @@ final class DateGeneratorTests: XCTestCase {
             byMonthDay: [1, 15],
             byMonth: [1, 6, 12]
         )
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 9)
         
@@ -409,7 +395,7 @@ final class DateGeneratorTests: XCTestCase {
             count: 9,
             byDay: [.monday, .wednesday, .friday]
         )
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 9)
     }
@@ -423,7 +409,7 @@ final class DateGeneratorTests: XCTestCase {
             count: 10,
             byDay: [.monday, .tuesday, .wednesday, .thursday, .friday]
         )
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 10)
         
@@ -452,7 +438,7 @@ final class DateGeneratorTests: XCTestCase {
             count: 10,
             byDay: [.saturday, .sunday]
         )
-        let dates = rrule.generateDates(startingFrom: testStartDate)
+        let dates = rrule.generateDates(startingFrom: testStartDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 10)
         
@@ -466,7 +452,7 @@ final class DateGeneratorTests: XCTestCase {
     func testFirstOfMonth() {
         // Первое число каждого месяца
         let rrule = RRule(frequency: .monthly, count: 12, byMonthDay: [1])
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 12)
         
@@ -479,7 +465,7 @@ final class DateGeneratorTests: XCTestCase {
     func testQuarterly() {
         // Каждый квартал (каждые 3 месяца)
         let rrule = RRule(frequency: .monthly, interval: 3, count: 4)
-        let dates = rrule.generateDates(startingFrom: startDate)
+        let dates = rrule.generateDates(startingFrom: startDate, calendar: calendar)
         
         XCTAssertEqual(dates.count, 4)
         

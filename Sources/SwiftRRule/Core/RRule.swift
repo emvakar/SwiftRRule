@@ -65,10 +65,12 @@ public struct RRule: Codable, Equatable {
     // MARK: - Date Generation
     
     /// Генерация дат начиная с указанной даты
-    /// - Parameter startDate: Начальная дата
+    /// - Parameters:
+    ///   - startDate: Начальная дата
+    ///   - calendar: Календарь для вычислений (по умолчанию текущий)
     /// - Returns: Массив дат, соответствующих правилу повторения
-    public func generateDates(startingFrom startDate: Date) -> [Date] {
-        let generator = DateGenerator(rrule: self)
+    public func generateDates(startingFrom startDate: Date, calendar: Calendar = .current) -> [Date] {
+        let generator = DateGenerator(rrule: self, calendar: calendar)
         return generator.generateDates(startingFrom: startDate)
     }
     

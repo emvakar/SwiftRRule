@@ -31,16 +31,25 @@ public struct DateGenerator {
         let interval = rrule.interval ?? 1
         let maxCount = rrule.count ?? Int.max
         
-        // Начальная дата должна соответствовать правилам
-        guard isValidDate(startDate, for: rrule) else {
-            return []
-        }
-        
+        // Если есть BYHOUR, BYMINUTE, BYSECOND для DAILY частоты, 
+        // то начальная дата может не соответствовать правилам
+        // В этом случае мы все равно начнем генерацию
         var currentDate = startDate
+        
+        // Если нет BYHOUR, BYMINUTE, BYSECOND для DAILY частоты, то проверяем соответствие начальной даты
+        if !(rrule.frequency == .daily && (rrule.byHour != nil || rrule.byMinute != nil || rrule.bySecond != nil)) {
+            guard isValidDate(startDate, for: rrule) else {
+                return []
+            }
+        }
         var count = 0
+        var iterations = 0
+        let maxIterations = 10000 // Защита от бесконечного цикла
         
         // Генерируем даты в зависимости от частоты
-        while count < maxCount {
+        while count < maxCount && iterations < maxIterations {
+            iterations += 1
+            
             // Проверяем ограничение UNTIL
             if let until = rrule.until, currentDate > until {
                 break
@@ -48,6 +57,16 @@ public struct DateGenerator {
             
             // Применяем BY* правила для фильтрации дат
             let validDates = applyByRules(to: currentDate, for: rrule)
+            
+            // Если нет валидных дат, переходим к следующему дню
+            if validDates.isEmpty {
+                // Переходим к следующей дате в зависимости от частоты
+                guard let nextDate = nextDate(from: currentDate, frequency: rrule.frequency, interval: interval, rrule: rrule) else {
+                    break
+                }
+                currentDate = nextDate
+                continue
+            }
             
             for date in validDates {
                 if count >= maxCount {
@@ -63,7 +82,7 @@ public struct DateGenerator {
             }
             
             // Переходим к следующей дате в зависимости от частоты
-            guard let nextDate = nextDate(from: currentDate, frequency: rrule.frequency, interval: interval) else {
+            guard let nextDate = nextDate(from: currentDate, frequency: rrule.frequency, interval: interval, rrule: rrule) else {
                 break
             }
             
@@ -85,19 +104,50 @@ public struct DateGenerator {
     private func applyByRules(to date: Date, for rrule: RRule) -> [Date] {
         var dates = [date]
         
-        // BYSECOND
-        if let bySecond = rrule.bySecond {
-            dates = filterBySecond(dates, bySecond: bySecond)
-        }
-        
-        // BYMINUTE
-        if let byMinute = rrule.byMinute {
-            dates = filterByMinute(dates, byMinute: byMinute)
-        }
-        
-        // BYHOUR
-        if let byHour = rrule.byHour {
-            dates = filterByHour(dates, byHour: byHour)
+        // Для DAILY частоты BYHOUR, BYMINUTE, BYSECOND генерируют все комбинации для дня
+        if rrule.frequency == .daily && (rrule.byHour != nil || rrule.byMinute != nil || rrule.bySecond != nil) {
+            var result: [Date] = []
+            var baseComponents = calendar.dateComponents([.year, .month, .day], from: date)
+            
+            // Получаем значения для генерации комбинаций
+            let hours = rrule.byHour ?? [calendar.component(.hour, from: date)]
+            let minutes = rrule.byMinute ?? [calendar.component(.minute, from: date)]
+            let seconds = rrule.bySecond ?? [calendar.component(.second, from: date)]
+            
+            // Генерируем все комбинации часов, минут и секунд для этого дня
+            // Сортируем даты по времени для правильного порядка
+            for hour in hours.sorted() {
+                for minute in minutes.sorted() {
+                    for second in seconds.sorted() {
+                        baseComponents.hour = hour
+                        baseComponents.minute = minute
+                        baseComponents.second = second
+                        if let newDate = calendar.date(from: baseComponents) {
+                            result.append(newDate)
+                        }
+                    }
+                }
+            }
+            
+            // Для DAILY частоты с BYHOUR/BYMINUTE/BYSECOND возвращаем результат сразу,
+            // не применяя другие правила, которые могут изменить даты
+            return result
+        } else {
+            // Для других частот используем фильтры
+            // BYSECOND
+            if let bySecond = rrule.bySecond {
+                dates = filterBySecond(dates, bySecond: bySecond)
+            }
+            
+            // BYMINUTE
+            if let byMinute = rrule.byMinute {
+                dates = filterByMinute(dates, byMinute: byMinute)
+            }
+            
+            // BYHOUR
+            if let byHour = rrule.byHour {
+                dates = filterByHour(dates, byHour: byHour)
+            }
         }
         
         // BYDAY
@@ -134,7 +184,7 @@ public struct DateGenerator {
     }
     
     /// Получение следующей даты в зависимости от частоты
-    private func nextDate(from date: Date, frequency: Frequency, interval: Int) -> Date? {
+    private func nextDate(from date: Date, frequency: Frequency, interval: Int, rrule: RRule) -> Date? {
         var components = DateComponents()
         
         switch frequency {
@@ -148,7 +198,17 @@ public struct DateGenerator {
             components.year = interval
         }
         
-        return calendar.date(byAdding: components, to: date)
+        // Для DAILY частоты с BYHOUR/BYMINUTE/BYSECOND используем начало дня
+        // чтобы избежать проблем с сохранением часов при переходе к следующему дню
+        let baseDate: Date
+        if rrule.frequency == .daily && (rrule.byHour != nil || rrule.byMinute != nil || rrule.bySecond != nil) {
+            let dayComponents = calendar.dateComponents([.year, .month, .day], from: date)
+            baseDate = calendar.date(from: dayComponents) ?? date
+        } else {
+            baseDate = date
+        }
+        
+        return calendar.date(byAdding: components, to: baseDate)
     }
     
     // MARK: - BY* Filters
@@ -202,10 +262,14 @@ public struct DateGenerator {
             return date
         }
         
-        // Ищем ближайший день недели
-        let diff = targetDayOfWeek - dayOfWeek
-        if let adjustedDate = calendar.date(byAdding: .day, value: diff, to: date) {
-            return adjustedDate
+        // Для DAILY частоты не ищем ближайший день недели, так как это может изменить дату
+        // Для WEEKLY частоты ищем ближайший день недели
+        if frequency == .weekly {
+            // Ищем ближайший день недели в той же неделе
+            let diff = targetDayOfWeek - dayOfWeek
+            if let adjustedDate = calendar.date(byAdding: .day, value: diff, to: date) {
+                return adjustedDate
+            }
         }
         
         return nil
