@@ -91,11 +91,11 @@ jobs:
       
       - name: Build for iOS ${{ matrix.ios-version }}
         run: |
-          swift build -c release
+          swift build
       
       - name: Test for iOS ${{ matrix.ios-version }}
         run: |
-          swift test -c release
+          swift test
 
   test-summary:
     name: Test Summary
