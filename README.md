@@ -1,6 +1,6 @@
 # SwiftRRule
 
-![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)
+![Swift](https://img.shields.io/badge/Swift-6.0+-orange.svg)
 ![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20macOS%20%7C%20tvOS%20%7C%20watchOS%20%7C%20Linux-lightgrey.svg)
 ![Tests](https://github.com/emvakar/SwiftRRule/actions/workflows/test.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -36,9 +36,9 @@ SwiftRRule allows you to parse, generate, and calculate dates based on recurrenc
 
 ### Language and Tools
 
-- **Swift** 5.9+
-- **Xcode** 15.0+ (for development on Apple platforms)
-- **Swift Package Manager** (built into Swift 5.9+)
+- **Swift** 6.0+
+- **Xcode** 16.0+ (for development on Apple platforms)
+- **Swift Package Manager** (built into Swift 6.0+)
 
 ## Installation
 

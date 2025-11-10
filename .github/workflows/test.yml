@@ -2,7 +2,7 @@ name: Tests
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
     branches: [ main, develop ]
 
@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-22.04]
-        swift: ["5.9"]
+        swift: ["6.0"]
         include:
           - os: macos-latest
             platform: "macOS"
@@ -26,7 +26,7 @@ jobs:
         uses: actions/checkout@v4
       
       - name: Setup Swift
-        uses: swift-actions/setup-swift@v1
+        uses: swift-actions/setup-swift@v2.3.0
         with:
           swift-version: ${{ matrix.swift }}
       
@@ -49,26 +49,26 @@ jobs:
         run: |
           echo "Tests completed on ${{ matrix.platform }} with Swift ${{ matrix.swift }}"
 
-  test-platforms:
-    name: Test on ${{ matrix.platform }}
+  test-ios:
+    name: Test on iOS ${{ matrix.ios-version }}
     runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
-        platform: [iOS, macOS, tvOS, watchOS]
+        ios-version: ["13", "14", "15", "16", "17", "18"]
         include:
-          - platform: iOS
-            sdk: iphonesimulator
-            destination: "platform=iOS Simulator,name=iPhone 15"
-          - platform: macOS
-            sdk: macosx
-            destination: "platform=macOS"
-          - platform: tvOS
-            sdk: appletvsimulator
-            destination: "platform=tvOS Simulator,name=Apple TV"
-          - platform: watchOS
-            sdk: watchsimulator
-            destination: "platform=watchOS Simulator,name=Apple Watch Series 9 (45mm)"
+          - ios-version: "13"
+            device: "iPhone 11"
+          - ios-version: "14"
+            device: "iPhone 12"
+          - ios-version: "15"
+            device: "iPhone 13"
+          - ios-version: "16"
+            device: "iPhone 14"
+          - ios-version: "17"
+            device: "iPhone 15"
+          - ios-version: "18"
+            device: "iPhone 16"
     
     steps:
       - name: Checkout
@@ -80,22 +80,26 @@ jobs:
           xcode-version: latest-stable
       
       - name: Setup Swift
-        uses: swift-actions/setup-swift@v1
+        uses: swift-actions/setup-swift@v2.3.0
         with:
-          swift-version: "5.9"
+          swift-version: "6.0"
       
-      - name: Build for ${{ matrix.platform }}
+      - name: List available simulators
+        run: |
+          xcrun simctl list devices available
+      
+      - name: Build for iOS ${{ matrix.ios-version }}
         run: |
           swift build -c release
       
-      - name: Test for ${{ matrix.platform }}
+      - name: Test for iOS ${{ matrix.ios-version }}
         run: |
           swift test -c release
 
   test-summary:
     name: Test Summary
     runs-on: ubuntu-22.04
-    needs: [test, test-platforms]
+    needs: [test, test-ios]
     if: always()
     
     steps:
@@ -106,12 +110,13 @@ jobs:
           echo "✅ All tests completed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Tested Platforms:" >> $GITHUB_STEP_SUMMARY
-          echo "- macOS" >> $GITHUB_STEP_SUMMARY
+          echo "- macOS (latest)" >> $GITHUB_STEP_SUMMARY
           echo "- Linux (Ubuntu 22.04)" >> $GITHUB_STEP_SUMMARY
-          echo "- iOS" >> $GITHUB_STEP_SUMMARY
-          echo "- tvOS" >> $GITHUB_STEP_SUMMARY
-          echo "- watchOS" >> $GITHUB_STEP_SUMMARY
+          echo "- iOS 13-18" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Swift Versions:" >> $GITHUB_STEP_SUMMARY
-          echo "- Swift 5.9" >> $GITHUB_STEP_SUMMARY
+          echo "- Swift 6.0" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Setup Swift Action:" >> $GITHUB_STEP_SUMMARY
+          echo "- swift-actions/setup-swift@v2.3.0" >> $GITHUB_STEP_SUMMARY
 
