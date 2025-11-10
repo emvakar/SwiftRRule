@@ -10,29 +10,22 @@ jobs:
   # Тестирование на Ubuntu с помощью swift test
   test-linux:
     name: Swift ${{ matrix.swift }} on Ubuntu
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        swift: ["6.0"]
+        swift: ["6.1"]
     
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
-      - name: Import Swift GPG keys
-        run: |
-          curl --silent --retry 3 --location --fail https://swift.org/keys/all-keys.asc | gpg --import - || true
-      
+
       - name: Setup Swift
         uses: swift-actions/setup-swift@v2
         with:
           swift-version: ${{ matrix.swift }}
       
-      - name: Build
-        run: swift build
-      
-      - name: Run tests
+      - name: Build & Test
         run: swift test
 
   # Тестирование на macOS с помощью swift test (используем встроенный Swift из Xcode)
@@ -52,10 +45,7 @@ jobs:
       - name: Verify Swift version
         run: swift --version
       
-      - name: Build
-        run: swift build
-      
-      - name: Run tests
+      - name: Build & Test
         run: swift test
 
   # Тестирование на iOS с помощью xcodebuild (временно отключено)
