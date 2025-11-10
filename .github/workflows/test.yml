@@ -135,12 +135,15 @@ jobs:
           xcrun simctl boot "$SIMULATOR" 2>/dev/null || true
           
           # Подождать, пока симулятор загрузится
-          sleep 5
+          sleep 10
+          
+          # Проверить, что симулятор загружен
+          xcrun simctl list devices | grep "$SIMULATOR" | grep -i "Booted" || echo "Warning: Simulator may not be fully booted"
       
       - name: Build for iOS ${{ matrix.ios-version }}
         run: |
           xcodebuild -scheme SwiftRRule \
-            -destination "id=${{ env.SIMULATOR_UUID }}" \
+            -destination "platform=iOS Simulator,id=${{ env.SIMULATOR_UUID }}" \
             -configuration Debug \
             clean build
       
@@ -148,7 +151,7 @@ jobs:
         run: |
           xcodebuild test \
             -scheme SwiftRRule \
-            -destination "id=${{ env.SIMULATOR_UUID }}" \
+            -destination "platform=iOS Simulator,id=${{ env.SIMULATOR_UUID }}" \
             -configuration Debug \
             -enableCodeCoverage NO
 
