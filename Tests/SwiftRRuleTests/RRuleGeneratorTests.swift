@@ -234,5 +234,177 @@ final class RRuleGeneratorTests: XCTestCase {
         
         XCTAssertTrue(result.contains("BYMONTHDAY=-1,-2"))
     }
+    
+    // MARK: - Additional Tests
+    
+    func testGenerateWithAllByRules() {
+        let rrule = RRule(
+            frequency: .daily,
+            interval: 2,
+            count: 10,
+            bySecond: [0, 30],
+            byMinute: [0, 15, 30, 45],
+            byHour: [9, 17],
+            byDay: [.monday, .friday],
+            byMonthDay: [1, 15],
+            byYearDay: [1, 365],
+            byWeekNo: [1, 52],
+            byMonth: [1, 6, 12],
+            bySetPos: [1, -1],
+            wkst: .sunday
+        )
+        let result = rrule.toString()
+        
+        XCTAssertTrue(result.contains("FREQ=DAILY"))
+        XCTAssertTrue(result.contains("INTERVAL=2"))
+        XCTAssertTrue(result.contains("COUNT=10"))
+        XCTAssertTrue(result.contains("BYSECOND=0,30"))
+        XCTAssertTrue(result.contains("BYMINUTE=0,15,30,45"))
+        XCTAssertTrue(result.contains("BYHOUR=9,17"))
+        XCTAssertTrue(result.contains("BYDAY=MO,FR"))
+        XCTAssertTrue(result.contains("BYMONTHDAY=1,15"))
+        XCTAssertTrue(result.contains("BYYEARDAY=1,365"))
+        XCTAssertTrue(result.contains("BYWEEKNO=1,52"))
+        XCTAssertTrue(result.contains("BYMONTH=1,6,12"))
+        XCTAssertTrue(result.contains("BYSETPOS=1,-1"))
+        XCTAssertTrue(result.contains("WKST=SU"))
+    }
+    
+    func testGenerateWithUntilDate() {
+        var components = DateComponents()
+        components.year = 2024
+        components.month = 12
+        components.day = 31
+        components.hour = 23
+        components.minute = 59
+        components.second = 59
+        let untilDate = Calendar(identifier: .gregorian).date(from: components)!
+        
+        let rrule = RRule(frequency: .daily, until: untilDate)
+        let result = rrule.toString()
+        
+        XCTAssertTrue(result.contains("FREQ=DAILY"))
+        XCTAssertTrue(result.contains("UNTIL="))
+    }
+    
+    func testGenerateWithSingleByRule() {
+        let rrule = RRule(frequency: .daily, byHour: [9])
+        let result = rrule.toString()
+        
+        XCTAssertTrue(result.contains("BYHOUR=9"))
+    }
+    
+    func testGenerateWithMultipleByDay() {
+        let rrule = RRule(
+            frequency: .weekly,
+            byDay: [.monday, .tuesday, .wednesday, .thursday, .friday, .saturday, .sunday]
+        )
+        let result = rrule.toString()
+        
+        XCTAssertTrue(result.contains("BYDAY=MO,TU,WE,TH,FR,SA,SU"))
+    }
+    
+    func testGenerateWithByDayPositions() {
+        let rrule = RRule(
+            frequency: .monthly,
+            byDay: [
+                Weekday(dayOfWeek: 2, position: 1),
+                Weekday(dayOfWeek: 2, position: 2),
+                Weekday(dayOfWeek: 2, position: -1)
+            ]
+        )
+        let result = rrule.toString()
+        
+        XCTAssertTrue(result.contains("BYDAY=1MO,2MO,-1MO"))
+    }
+    
+    func testGenerateOrderOfParameters() {
+        // Проверяем, что параметры идут в правильном порядке
+        let rrule = RRule(
+            frequency: .weekly,
+            interval: 2,
+            count: 10,
+            byDay: [.monday]
+        )
+        let result = rrule.toString()
+        
+        let components = result.components(separatedBy: ";")
+        XCTAssertEqual(components[0], "FREQ=WEEKLY")
+        XCTAssertTrue(components.contains("INTERVAL=2"))
+        XCTAssertTrue(components.contains("COUNT=10"))
+        XCTAssertTrue(components.contains("BYDAY=MO"))
+    }
+    
+    func testGenerateWithLargeInterval() {
+        let rrule = RRule(frequency: .daily, interval: 100)
+        let result = rrule.toString()
+        
+        XCTAssertTrue(result.contains("INTERVAL=100"))
+    }
+    
+    func testGenerateWithLargeCount() {
+        let rrule = RRule(frequency: .daily, count: 1000)
+        let result = rrule.toString()
+        
+        XCTAssertTrue(result.contains("COUNT=1000"))
+    }
+    
+    func testGenerateYearlyWithAllMonths() {
+        let rrule = RRule(frequency: .yearly, byMonth: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+        let result = rrule.toString()
+        
+        XCTAssertTrue(result.contains("BYMONTH=1,2,3,4,5,6,7,8,9,10,11,12"))
+    }
+    
+    func testGenerateWithWkstSunday() {
+        let rrule = RRule(frequency: .weekly, wkst: .sunday)
+        let result = rrule.toString()
+        
+        XCTAssertTrue(result.contains("WKST=SU"))
+    }
+    
+    func testGenerateWithWkstSaturday() {
+        let rrule = RRule(frequency: .weekly, wkst: .saturday)
+        let result = rrule.toString()
+        
+        XCTAssertTrue(result.contains("WKST=SA"))
+    }
+    
+    // MARK: - Round-Trip Additional Tests
+    
+    func testRoundTripWithUntil() throws {
+        var components = DateComponents()
+        components.year = 2024
+        components.month = 12
+        components.day = 31
+        let untilDate = Calendar(identifier: .gregorian).date(from: components)!
+        
+        let rrule = RRule(frequency: .daily, until: untilDate)
+        let generated = rrule.toString()
+        let reparsed = try RRule.parse(generated)
+        
+        XCTAssertEqual(rrule.frequency, reparsed.frequency)
+        // UNTIL может отличаться из-за форматирования, но должна быть близка
+        if let until1 = rrule.until, let until2 = reparsed.until {
+            let diff = abs(until1.timeIntervalSince(until2))
+            XCTAssertLessThan(diff, 86400, "UNTIL dates should be within 1 day")
+        }
+    }
+    
+    func testRoundTripWithAllByRules() throws {
+        let original = "FREQ=DAILY;INTERVAL=2;COUNT=10;BYSECOND=0,30;BYMINUTE=0,15;BYHOUR=9,17;BYDAY=MO,FR;BYMONTHDAY=1,15;BYMONTH=1,6,12"
+        let rrule = try RRule.parse(original)
+        let generated = rrule.toString()
+        let reparsed = try RRule.parse(generated)
+        
+        XCTAssertEqual(rrule.frequency, reparsed.frequency)
+        XCTAssertEqual(rrule.interval, reparsed.interval)
+        XCTAssertEqual(rrule.count, reparsed.count)
+        XCTAssertEqual(rrule.bySecond, reparsed.bySecond)
+        XCTAssertEqual(rrule.byMinute, reparsed.byMinute)
+        XCTAssertEqual(rrule.byHour, reparsed.byHour)
+        XCTAssertEqual(rrule.byMonthDay, reparsed.byMonthDay)
+        XCTAssertEqual(rrule.byMonth, reparsed.byMonth)
+    }
 }
 
